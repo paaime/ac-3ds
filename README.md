@@ -13,6 +13,8 @@ Supported version: **GAFE01, revision 0 (USA)**.
 > **Still in development.** This is an early version (0.1): expect bugs. Feedback, bug reports and ideas are all
 > welcome: see [Feedback](#feedback).
 
+[![Animal Crossing (GameCube) running natively on the 3DS](https://img.youtube.com/vi/zcvUqQQ_Qu8/maxresdefault.jpg)](https://www.youtube.com/watch?v=zcvUqQQ_Qu8)
+
 ## Features
 
 - **About 60 fps** in most of the town on a New 3DS, and around 40 in its busiest views. The game keeps its
