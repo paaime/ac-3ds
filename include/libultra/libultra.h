@@ -12,6 +12,9 @@
 #include "libultra/os_pi.h"
 #include "libultra/initialize.h"
 #include "libc64/math64.h" /* TODO: sins and coss belong in libultra */
+#ifdef TARGET_3DS
+#include <strings.h> /* newlib declares bcmp/bcopy/bzero (const, size_t) */
+#endif
 
 #define N64_SCREEN_HEIGHT 240
 #define N64_SCREEN_WIDTH 320
@@ -22,9 +25,11 @@ extern "C" {
 
 typedef u64 Z_OSTime;
 
+#ifndef TARGET_3DS
 int bcmp(void* v1, void* v2, u32 size);
 void bcopy(void* src, void* dst, size_t n);
 void bzero(void* ptr, size_t size);
+#endif
 void osSyncPrintf(const char* fmt, ...);
 void osWritebackDCache(void* vaddr, u32 nbytes);
 u32 osGetCount(void);

@@ -202,7 +202,19 @@ static void swap_Mail_array(Mail_c* mail, u32 count) {
 /* mQst_base_c u32 bitfield: direction-aware repack.
  * BE: quest_type[31:30], quest_kind[29:24], time_limit_enabled[23], progress[22:19], give_reward[18], unused[17:16]
  * LE: quest_type[1:0], quest_kind[7:2], time_limit_enabled[8], progress[12:9], give_reward[13], unused[15:14] */
+#ifdef TARGET_3DS
+/* platform/3ds/common/quest_bits.c */
+extern void quest_bits_repack(u8* bytes, _Bool from_gc);
+#endif
+
 static void swap_mQst_base(mQst_base_c* qb, pc_bswap_dir_t dir) {
+#ifdef TARGET_3DS
+    /* ARM GCC packs the bitfields into bytes 0-1 and puts time_limit at byte 2,
+     * as the GC does (MinGW's MS layout: byte 4). Rebuilding bytes 0-3 below
+     * would zero time_limit.sec/min, so only the bitfield half is repacked. */
+    quest_bits_repack((u8*)qb, dir == PC_BSWAP_FROM_BE);
+    swap_lbRTC_time(&qb->time_limit);
+#else
     u8* b = (u8*)qb;
     u32 raw;
     u32 quest_type, quest_kind, time_limit_enabled, progress, give_reward, unused_bits;
@@ -240,6 +252,7 @@ static void swap_mQst_base(mQst_base_c* qb, pc_bswap_dir_t dir) {
     }
 
     swap_lbRTC_time(&qb->time_limit);
+#endif
 }
 
 static void swap_mQst_delivery(mQst_delivery_c* qd, pc_bswap_dir_t dir) {

@@ -1121,6 +1121,12 @@ static int mMsg_Main_Cursol_ControlCursol(mMsg_Window_c* msg_p) {
     }
   }
 #endif
+#ifdef TARGET_3DS
+  /* The 3DS port's "Faster text" setting: the fast speed from the first letter, as if B were pressed. */
+  if (g_ac3ds_fast_text && (msg_p->status_flags & mMsg_STATUS_FLAG_CURSOL_JUST) == 0) {
+    msg_p->status_flags |= mMsg_STATUS_FLAG_FAST_TEXT;
+  }
+#endif
 
   if (mMsg_Check_CancelOrder(msg_p)) {
     msg_p->cancel_flag = TRUE;

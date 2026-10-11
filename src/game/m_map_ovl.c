@@ -678,6 +678,8 @@ static void mMP_dma_texture(u8** texture_pp, int type) {
     *texture_pp = l_map_texture[type];
 }
 
+
+
 static void mMP_set_map_texture_pal(mMP_Ovl_c* map_ovl) {
     int max_no_table[FG_BLOCK_TOTAL_NUM];
     int i;
@@ -1363,6 +1365,180 @@ extern void mMP_map_ovl_construct(Submenu* submenu) {
     mMP_map_ovl_init(submenu);
     mMP_map_ovl_set_proc(submenu);
 }
+
+#ifdef TARGET_3DS
+#include <stdlib.h>
+
+/* The 3DS bottom screen's always-on map (platform/3ds/game/town_map_3ds.c):
+ * this menu's own drawing, run outside the pause
+ * menu, with a private state and menu info. The caller provides the display
+ * list arena (game->graph's polygon list) and runs it. */
+static mMP_Ovl_c* l_3ds_map_ovl;
+static mSM_MenuInfo_c l_3ds_menu;
+
+static void mMP_3ds_set_char_matrix(GRAPH* graph) {
+    OPEN_POLY_OPA_DISP(graph);
+    gSPMatrix(POLY_OPA_DISP++, &Mtx_clear, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    CLOSE_POLY_OPA_DISP(graph);
+}
+
+/* Where the map would put the player, as mMP_set_init_data computes it, and
+ * whether the game would let the map open here (mSM_check_open_map_new,
+ * without its button): a player, the opening intro over, not an island
+ * cottage or the ocean, and an acre of the town grid. Rooms with no door back
+ * to the town (player select, save, the train) give a room position, which
+ * falls outside the grid; mMP_set_init_data would index past its tables. */
+static int mMP_3ds_can_show(GAME_PLAY* play) {
+    PLAYER_ACTOR* player = get_player_actor_withoutCheck(play);
+    xyz_t pos;
+    int bx;
+    int bz;
+
+    if (player == NULL || mEv_CheckFirstIntro() != FALSE || Save_Get(scene_no) == SCENE_COTTAGE_MY ||
+        Save_Get(scene_no) == SCENE_COTTAGE_NPC) {
+        return FALSE;
+    }
+    if (Common_Get(field_type) != mFI_FIELDTYPE2_FG) {
+        if (Common_Get(door_data.next_scene_id) == 0) {
+            return FALSE;
+        }
+        xyz_t_move_s_xyz(&pos, Common_GetPointer(structure_exit_door_data.exit_position));
+    } else {
+        pos = player->actor_class.world.position;
+    }
+    mFI_Wpos2BlockNum(&bx, &bz, pos);
+    return bx >= 1 && bx <= FG_BLOCK_X_NUM && bz >= 1 && bz <= FG_BLOCK_Z_NUM &&
+           mFI_CheckBlockKind_OR(bx, bz, mRF_BLOCKKIND_OCEAN) == FALSE;
+}
+
+/* Fills the map's data from the town and the player, as opening the menu does
+ * (no sound, no animation). FALSE if the map can't be shown here or memory
+ * ran out. */
+extern int mMP_3ds_refresh(void) {
+    if (gamePT == NULL || !mMP_3ds_can_show((GAME_PLAY*)gamePT)) {
+        return FALSE;
+    }
+    if (l_3ds_map_ovl == NULL) {
+        l_3ds_map_ovl = (mMP_Ovl_c*)malloc(sizeof(mMP_Ovl_c));
+        if (l_3ds_map_ovl == NULL) {
+            return FALSE;
+        }
+    }
+    mem_clear((u8*)l_3ds_map_ovl, sizeof(mMP_Ovl_c), 0);
+    l_3ds_map_ovl->combination_table = data_combi_table;
+    mMP_map_draw_init();
+    bzero(&l_3ds_menu, sizeof(l_3ds_menu)); /* resting position (0, 0) */
+    l_3ds_menu.data0 = 1;                   /* as the pause menu opens it (mSM_submenu_ctrl) */
+    mMP_set_init_data(l_3ds_map_ovl, &l_3ds_menu);
+    return TRUE;
+}
+
+/* Whether the map can show here (mMP_3ds_can_show), without filling it. */
+extern int mMP_3ds_available(void) {
+    return gamePT != NULL && mMP_3ds_can_show((GAME_PLAY*)gamePT);
+}
+
+/* The cursor on acre (bx, bz), 0-based, as moving it in the open menu does,
+ * without the slide: the panel then shows that acre. After mMP_3ds_refresh,
+ * which puts it on the player's acre. */
+extern void mMP_3ds_select(int bx, int bz) {
+    if (l_3ds_map_ovl == NULL || bx < 0 || bx >= FG_BLOCK_X_NUM || bz < 0 || bz >= FG_BLOCK_Z_NUM) {
+        return;
+    }
+    l_3ds_map_ovl->sel_bx = bx;
+    l_3ds_map_ovl->sel_bz = bz;
+    l_3ds_map_ovl->map_cursor_current_xpos = (f32)bx * mMP_BLOCK_SIZE_F;
+    l_3ds_map_ovl->map_cursor_current_zpos = -(f32)bz * mMP_BLOCK_SIZE_F;
+    l_3ds_map_ovl->map_cursor_target_xpos = l_3ds_map_ovl->map_cursor_current_xpos;
+    l_3ds_map_ovl->map_cursor_target_zpos = l_3ds_map_ovl->map_cursor_current_zpos;
+}
+
+/* Pieces of kan_win_model2 (src/data/model/kan_win.c), drawn apart: the
+ * grid's frame with the grid, the acre's panel on its own. */
+extern Gfx kan_win_futiT_model[];
+extern Gfx kan_win_futi2T_model[];
+extern Gfx kan_win_sakiT_model[];
+extern Gfx kan_win_moji1_model[];
+extern Gfx kan_win_moji2_model[];
+extern Gfx kan_win_ban2T_model[];
+extern Gfx kan_win_tyou2T_model[];
+extern Gfx kan_win_bou_model[];
+
+/* As mMP_set_dl starts: the menus' units with the window at rest, the
+ * caller's orthographic view, and the map button's palette (data0 = 1). */
+static void mMP_3ds_begin(GRAPH* graph, Mtx* projection) {
+    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
+    Matrix_translate(0.0f, 0.0f, 140.0f, MTX_MULT);
+
+    OPEN_POLY_OPA_DISP(graph);
+    gSPMatrix(POLY_OPA_DISP++, projection, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_PROJECTION);
+    gSPSegment(POLY_OPA_DISP++, G_MWO_SEGMENT_B, kan_win_color1_mode_p);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_mode);
+    gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, TEXEL0, PRIMITIVE,
+                      ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, TEXEL0);
+    CLOSE_POLY_OPA_DISP(graph);
+}
+
+/* The acre grid as the open menu draws it, without the window and its row
+ * and column labels: the tiles, the grid's frame, the houses, the player's
+ * acre and the cursor. */
+extern void mMP_3ds_draw_grid(GAME* game, Mtx* projection) {
+    GRAPH* graph = game->graph;
+
+    mMP_3ds_begin(graph, projection);
+    mMP_set_map_dl(graph, l_3ds_map_ovl);
+
+    OPEN_POLY_OPA_DISP(graph);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_mode);
+    gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, TEXEL0, PRIMITIVE,
+                      ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, TEXEL0);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_futiT_model);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_futi2T_model);
+    CLOSE_POLY_OPA_DISP(graph);
+
+    mMP_set_house_dl(graph, l_3ds_map_ovl, 0.0f, 0.0f);
+    mMP_set_cursol_dl(graph, l_3ds_map_ovl, 0.0f, 0.0f);
+}
+
+/* The acre's panel as the open menu draws it (mMP_set_win_dl and after):
+ * the "TOWN MAP" heading, the bubble with the acre's name, its houses and
+ * their owners. */
+extern void mMP_3ds_draw_panel(GAME* game, Mtx* projection) {
+    GRAPH* graph = game->graph;
+    mMP_Ovl_c* map_ovl = l_3ds_map_ovl;
+    mMP_LabelInfo_c* label_info = &map_ovl->label_info[map_ovl->sel_bz][map_ovl->sel_bx];
+    int label_count = label_info->label_cnt;
+    Gfx* waku = label_count == 4   ? kan_win_waku4T_model_p
+                : label_count == 3 ? kan_win_waku3T_model_p
+                : label_count == 1 ? kan_win_wakuT_model_p
+                : label_count == 0 ? kan_win_waku1T_model_p
+                                   : kan_win_waku2T_model_p;
+
+    mMP_3ds_begin(graph, projection);
+
+    OPEN_POLY_OPA_DISP(graph);
+    gSPSegment(POLY_OPA_DISP++, ANIME_1_TXT_SEG, kan_win_evw_anime_1_tex_table[map_ovl->sel_bx]);
+    gSPSegment(POLY_OPA_DISP++, ANIME_2_TXT_SEG, kan_win_evw_anime_2_tex_table[map_ovl->sel_bz]);
+    gSPDisplayList(POLY_OPA_DISP++, waku);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_sakiT_model);
+    gDPSetCombineLERP(POLY_OPA_DISP++, 0, 0, 0, PRIMITIVE, 0, 0, 0, TEXEL0, 0, 0, 0, PRIMITIVE, 0, 0, 0, TEXEL0);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_moji1_model);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_moji2_model);
+    gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, TEXEL0, PRIMITIVE,
+                      ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, TEXEL0);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_ban2T_model);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_tyou2T_model);
+    gDPSetCombineLERP(POLY_OPA_DISP++, 0, 0, 0, PRIMITIVE, 0, 0, 0, PRIMITIVE, 0, 0, 0, PRIMITIVE, 0, 0, 0, PRIMITIVE);
+    gSPDisplayList(POLY_OPA_DISP++, kan_win_bou_model);
+    CLOSE_POLY_OPA_DISP(graph);
+
+    mMP_set_label_top_dl(graph, label_info);
+    mMP_3ds_set_char_matrix(graph);
+    mMP_set_label_dl(game, label_info, 0.0f, 0.0f);
+}
+#endif
 
 extern void mMP_map_ovl_destruct(Submenu* submenu) {
     mMP_Ovl_c* map_ovl = submenu->overlay->map_ovl;

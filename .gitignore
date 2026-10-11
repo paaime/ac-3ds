@@ -47,3 +47,64 @@ temp/
 include/PR/
 include/gcc/
 include/compiler/gcc/stdlib.h
+
+# =============================================================================
+# 3DS port additions
+# NEVER commit game assets, disc images, or extracted/converted data.
+# Users supply their own GAFE01 (USA Rev 0) dump.
+# (orig/, build/, *.dol, *.rel, *.elf, *.map are already covered above.)
+# =============================================================================
+
+# Disc images (any format)
+*.iso
+*.ISO
+*.gcm
+*.GCM
+*.ciso
+*.CISO
+*.rvz
+*.wia
+*.wbfs
+*.gcz
+
+# Archives, saves and other game-derived data
+*.szs
+*.arc
+*.gci
+*.sav
+*.bin
+*.t3x
+*.bcwav
+/rom/
+/roms/
+/disc/
+/extracted/
+/converted/
+/asset_pack/
+/save/
+/saves/
+/texture_pack/
+/nes_roms/
+
+# Reference checkouts (decomp, other PC ports, tool binaries) and their builds
+/ref/
+
+# 3DS build outputs
+*.3dsx
+*.cia
+*.smdh
+*.shbin
+*.lst
+*.d
+build-*/
+
+# OS noise
+.DS_Store
+*.swp
+
+# Logs copied from the console (sdmc:/3ds/ac3ds/ac3ds.log)
+/ac3ds*.log
+
+# The maintainer's local notes and checklists: not published
+/*_NOTES.md
+/PLAYTEST.md

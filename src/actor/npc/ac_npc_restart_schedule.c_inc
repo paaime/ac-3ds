@@ -3,6 +3,9 @@ static void aNRST_think_start(NPC_RESTART_ACTOR* actor, GAME_PLAY* play) {
 }
 
 static void aNRST_think_title(NPC_RESTART_ACTOR* actor, GAME_PLAY* play) {
+#ifdef TARGET_3DS
+    ac3ds_save_return_clear(); /* quitting: the Save button's spot is forgotten */
+#endif
     play->fb_wipe_type = WIPE_TYPE_FADE_BLACK;
     play->fb_fade_type = FADE_TYPE_OUT_RETURN_TITLE;
     mPlib_request_main_invade_type1((GAME*)play);
@@ -32,6 +35,16 @@ static void aNRST_think_door(NPC_RESTART_ACTOR* actor, GAME_PLAY* play) {
     door_data.exit_position.z = homeZ[arrange_idx];
     door_data.exit_orientation = drt[arrange_idx];
     door_data.door_actor_name = HOUSE0 + arrange_idx;
+#ifdef TARGET_3DS
+    /* Saved from the 3DS bottom screen's Save button: back where the player
+     * stood, as from an NES game (goto_emu_game), not out of the house. */
+    if (ac3ds_save_return(&door_data.exit_position.x, &door_data.exit_position.y, &door_data.exit_position.z,
+                          &door_data.exit_orientation)) {
+        door_data.exit_type = 0;
+        door_data.extra_data = 0;
+        door_data.door_actor_name = EMPTY_NO;
+    }
+#endif
 
     goto_other_scene(play, &door_data, TRUE);
     Common_Get(transition).wipe_type = WIPE_TYPE_TRIFORCE;

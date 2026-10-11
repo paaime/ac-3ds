@@ -29,6 +29,13 @@
 #include <stdio.h>
 #endif
 
+/* The PC port's title menu (Start Game, Options, Quit Game). The 3DS keeps the
+ * GameCube's blinking PRESS START: HOME closes the game there, and the port's
+ * options are on the bottom screen. */
+#if defined(PC_ENHANCEMENTS) && !defined(TARGET_3DS)
+#define aAL_PC_TITLE_MENU
+#endif
+
 #define G_CC_TITLE PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, PRIMITIVE, 0, TEXEL0, 0
 #define G_CC_TM 0, 0, 0, PRIMITIVE, 0, 0, 0, TEXEL0
 #define G_CC_BACK 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0
@@ -334,7 +341,7 @@ static void aAL_fade_out_start_wait_init(ANIMAL_LOGO_ACTOR* actor, GAME* game) {
   actor->press_start_opacity = 255.0f;
 }
 
-#ifdef PC_ENHANCEMENTS
+#ifdef aAL_PC_TITLE_MENU
 static void aAL_pc_game_start_wait(ANIMAL_LOGO_ACTOR* actor, GAME* game) {
   GAME_PLAY* play = (GAME_PLAY*)game;
   f32 dt = (f32)game->graph->dt_num_60fps_frames;
@@ -442,7 +449,7 @@ static void aAL_setupAction(ANIMAL_LOGO_ACTOR* actor, GAME* game, int action) {
     &aAL_logo_in,
     &aAL_back_fadein,
     &aAL_start_key_chk_start_wait,
-#ifdef PC_ENHANCEMENTS
+#ifdef aAL_PC_TITLE_MENU
     &aAL_pc_game_start_wait,
 #else
     &aAL_game_start_wait,
@@ -772,7 +779,7 @@ static void aAL_title_draw(GAME* game, ANIMAL_LOGO_ACTOR* actor) {
   Matrix_pull();
 }
 
-#ifdef PC_ENHANCEMENTS
+#ifdef aAL_PC_TITLE_MENU
 static void aAL_pc_menu_draw(ANIMAL_LOGO_ACTOR* actor, GAME* game) {
   GRAPH* graph = game->graph;
   int td = actor->titledemo_no;
@@ -873,7 +880,7 @@ static void aAL_actor_draw(ACTOR* actor, GAME* game) {
       case aAL_ACTION_GAME_START:
       case aAL_ACTION_FADE_OUT_START:
       case aAL_ACTION_OUT:
-#ifdef PC_ENHANCEMENTS
+#ifdef aAL_PC_TITLE_MENU
         { extern int g_pc_title_main_menu_visible;
           g_pc_title_main_menu_visible = 1; }
         aAL_pc_menu_draw(logo_actor, game);
