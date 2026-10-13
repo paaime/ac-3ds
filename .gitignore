@@ -108,3 +108,7 @@ build-*/
 # The maintainer's local notes and checklists: not published
 /*_NOTES.md
 /PLAYTEST.md
+
+# Coding agents' guides: each developer keeps their own
+/AGENTS.md
+/CLAUDE.md

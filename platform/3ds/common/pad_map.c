@@ -1,8 +1,13 @@
 #include "pad_map.h"
 
+#include <math.h>
+
 #define STICK_MAX      127
-#define STICK_MIN      (-128)
 #define TRIGGER_FULL   255
+
+typedef struct {
+    int8_t x, y;
+} StickXY;
 
 static const struct {
     uint32_t key;
@@ -15,13 +20,18 @@ static const struct {
     { N3DS_KEY_DRIGHT, GC_PAD_RIGHT },
 };
 
-static int8_t scale_axis(int16_t v)
+static StickXY scale_stick(int16_t x, int16_t y)
 {
-    int scaled = (int)v * STICK_MAX / PAD_MAP_STICK_RANGE;
-    if (scaled > STICK_MAX) {
-        return STICK_MAX;
+    StickXY s = { 0, 0 };
+    float r = sqrtf((float)x * x + (float)y * y);
+    if (r <= PAD_MAP_STICK_DEAD_ZONE) {
+        return s;
     }
-    return (int8_t)(scaled < STICK_MIN ? STICK_MIN : scaled);
+    float tilt = r < PAD_MAP_STICK_RANGE ? r : PAD_MAP_STICK_RANGE;
+    float k = (tilt - PAD_MAP_STICK_DEAD_ZONE) * STICK_MAX / ((PAD_MAP_STICK_RANGE - PAD_MAP_STICK_DEAD_ZONE) * r);
+    s.x = (int8_t)lroundf(x * k);
+    s.y = (int8_t)lroundf(y * k);
+    return s;
 }
 
 GcPadState pad_map(const N3dsInput* in)
@@ -34,9 +44,11 @@ GcPadState pad_map(const N3dsInput* in)
     }
     s.trigger_l = (in->keys & N3DS_KEY_L) ? TRIGGER_FULL : 0;
     s.trigger_r = (in->keys & N3DS_KEY_R) ? TRIGGER_FULL : 0;
-    s.stick_x = scale_axis(in->circle_x);
-    s.stick_y = scale_axis(in->circle_y);
-    s.substick_x = scale_axis(in->cstick_x);
-    s.substick_y = scale_axis(in->cstick_y);
+    StickXY circle = scale_stick(in->circle_x, in->circle_y);
+    StickXY cstick = scale_stick(in->cstick_x, in->cstick_y);
+    s.stick_x = circle.x;
+    s.stick_y = circle.y;
+    s.substick_x = cstick.x;
+    s.substick_y = cstick.y;
     return s;
 }

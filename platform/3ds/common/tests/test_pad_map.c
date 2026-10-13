@@ -58,24 +58,65 @@ static void test_select_is_left_unmapped(void)
     CHECK(pad_map(&in).button == 0);
 }
 
-static void test_sticks_scale_and_clamp(void)
+static GcPadState circle(int16_t x, int16_t y)
 {
     N3dsInput in = keys(0);
-    GcPadState s = pad_map(&in);
+    in.circle_x = x;
+    in.circle_y = y;
+    return pad_map(&in);
+}
+
+static GcPadState cstick(int16_t x, int16_t y)
+{
+    N3dsInput in = keys(0);
+    in.cstick_x = x;
+    in.cstick_y = y;
+    return pad_map(&in);
+}
+
+static void test_sticks_at_rest_read_centred(void)
+{
+    GcPadState s = circle(0, 0);
     CHECK(s.stick_x == 0 && s.stick_y == 0 && s.substick_x == 0 && s.substick_y == 0);
 
-    in.circle_x = PAD_MAP_STICK_RANGE;
-    in.circle_y = -PAD_MAP_STICK_RANGE;
-    in.cstick_x = -PAD_MAP_STICK_RANGE / 2;
-    in.cstick_y = PAD_MAP_STICK_RANGE / 2;
-    s = pad_map(&in);
-    CHECK(s.stick_x == 127 && s.stick_y == -127);
-    CHECK(s.substick_x == -63 && s.substick_y == 63);
+    s = circle(12, -12); /* a pad resting off-centre, down and right (issue #1) */
+    CHECK(s.stick_x == 0 && s.stick_y == 0);
+    s = circle(PAD_MAP_STICK_DEAD_ZONE, 0);
+    CHECK(s.stick_x == 0 && s.stick_y == 0);
+    s = circle(0, -PAD_MAP_STICK_DEAD_ZONE);
+    CHECK(s.stick_x == 0 && s.stick_y == 0);
+}
 
-    in.circle_x = 400; /* beyond the range: clamped */
-    in.circle_y = -400;
-    s = pad_map(&in);
-    CHECK(s.stick_x == 127 && s.stick_y == -128);
+static void test_sticks_rise_from_the_dead_zone(void)
+{
+    GcPadState s = circle(PAD_MAP_STICK_DEAD_ZONE + 1, 0);
+    CHECK(s.stick_x == 1 && s.stick_y == 0);
+    s = circle(30, 0); /* 12 * 127 / 138 = 11.04 */
+    CHECK(s.stick_x == 11 && s.stick_y == 0);
+    s = circle(0, -100); /* 82 * 127 / 138 = 75.46 */
+    CHECK(s.stick_x == 0 && s.stick_y == -75);
+}
+
+static void test_sticks_reach_full_tilt(void)
+{
+    GcPadState s = circle(PAD_MAP_STICK_RANGE, 0);
+    CHECK(s.stick_x == 127 && s.stick_y == 0);
+    s = circle(0, -PAD_MAP_STICK_RANGE);
+    CHECK(s.stick_x == 0 && s.stick_y == -127);
+
+    s = circle(400, 0); /* beyond the range: full tilt */
+    CHECK(s.stick_x == 127 && s.stick_y == 0);
+    s = circle(400, -400); /* the direction kept: 127 / sqrt(2) = 89.8 */
+    CHECK(s.stick_x == 90 && s.stick_y == -90);
+}
+
+static void test_cstick_shares_the_dead_zone(void)
+{
+    GcPadState s = cstick(12, 12);
+    CHECK(s.substick_x == 0 && s.substick_y == 0);
+    s = cstick(-PAD_MAP_STICK_RANGE, 0);
+    CHECK(s.substick_x == -127 && s.substick_y == 0);
+    CHECK(s.stick_x == 0 && s.stick_y == 0);
 }
 
 int main(void)
@@ -83,7 +124,10 @@ int main(void)
     test_face_buttons_and_dpad();
     test_shoulders_are_full_presses();
     test_select_is_left_unmapped();
-    test_sticks_scale_and_clamp();
+    test_sticks_at_rest_read_centred();
+    test_sticks_rise_from_the_dead_zone();
+    test_sticks_reach_full_tilt();
+    test_cstick_shares_the_dead_zone();
     if (failures != 0) {
         fprintf(stderr, "pad_map: %d check(s) failed\n", failures);
         return 1;
