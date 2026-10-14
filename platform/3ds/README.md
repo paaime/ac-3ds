@@ -84,7 +84,10 @@ platform/3ds/tools/make_release.sh --source-url https://…   # → build/releas
 
 It configures and builds the player build in its own folder (`build/3ds-release`), makes the `.cia`, and packs
 both with the player's `README.txt` and the licences (`res/`). The zip holds exactly those files, so nothing
-else can slip in. The sources must be committed, since the readme names the commit; `--allow-dirty` makes a
+else can slip in. With `--source-url`, it also draws `ac3ds-<version>-fbi-qr.png` for FBI's Remote Install:
+the address of `ac3ds.cia` in the GitHub release tagged `v<version>`, so upload the zip, `ac3ds.cia` (from the
+`ac3ds-<version>` folder) and the QR code there. It needs `qrencode` (`brew install qrencode`, or `QRENCODE`);
+without it the script says so and goes on. The sources must be committed, since the readme names the commit; `--allow-dirty` makes a
 test package named `-dirty`. The version is `project(ac3ds VERSION …)` in `CMakeLists.txt`. It shows on the
 loading screen, in the log's first line and in the Homebrew Launcher.
 

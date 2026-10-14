@@ -1,7 +1,8 @@
 #!/bin/sh
 # make_release.sh [--source-url URL] [--allow-dirty]: build/release/ac3ds-<version>.zip, the player build
 # (.3dsx, .cia) with README.txt and the licences, built in build/3ds-release. Needs devkitPro (DEVKITPRO) and
-# makerom/bannertool (MAKEROM/BANNERTOOL, PATH or ref/bin/ctrtools): platform/3ds/README.md, "Release build".
+# makerom/bannertool (MAKEROM/BANNERTOOL, PATH or ref/bin/ctrtools), and qrencode (QRENCODE or PATH) for the
+# FBI QR code: platform/3ds/README.md, "Release build".
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
@@ -86,3 +87,15 @@ WANTED=$(echo $EXPECTED | tr ' ' '\n' | sort | tr '\n' ' ')
 (cd "$OUT" && zip -q -r -X "$NAME.zip" "$NAME")
 echo "== $OUT/$NAME.zip"
 (cd "$STAGE" && shasum -a 256 ac3ds.3dsx ac3ds.cia) && shasum -a 256 "$OUT/$NAME.zip" | sed "s|$OUT/||"
+
+QR=$OUT/$NAME-fbi-qr.png
+if [ -z "$SOURCE_URL" ] || [ -n "$DIRTY" ]; then
+    echo "make_release: no FBI QR code without --source-url, or for a test package" >&2
+elif QRENCODE=$(command -v "${QRENCODE:-qrencode}"); then
+    CIA_URL=${SOURCE_URL%/}/releases/download/v$VERSION/ac3ds.cia
+    "$QRENCODE" -o "$QR" -l M -s 8 -m 2 "$CIA_URL"
+    echo "== $QR: $CIA_URL"
+    echo "== upload to release v$VERSION: $NAME.zip, $NAME/ac3ds.cia, $NAME-fbi-qr.png"
+else
+    echo "make_release: qrencode not found (QRENCODE or PATH): no FBI QR code" >&2
+fi
