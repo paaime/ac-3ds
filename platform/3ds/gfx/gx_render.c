@@ -671,7 +671,7 @@ void gxr_frame_end(void)
     }
 }
 
-#define DEFAULT_CLEAR_COLOR 0x000000FFu
+#define DEFAULT_CLEAR_COLOR 0x00000000u
 
 static uint32_t s_clear_color = DEFAULT_CLEAR_COLOR;
 

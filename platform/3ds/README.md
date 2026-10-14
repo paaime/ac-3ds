@@ -2,9 +2,7 @@
 
 All 3DS-specific code for the Animal Crossing (GAFE01) port lives here. Shared decomp and PC-port code is
 only touched under `#ifdef TARGET_3DS`; [Changes to the shared code](#changes-to-the-shared-code) lists every
-such change. Installing and playing are
-in the [repository's README](../../README.md); the conventions for contributors and coding agents are in
-[AGENTS.md](../../AGENTS.md).
+such change. Installing and playing are in the [repository's README](../../README.md).
 
 ```
 platform/3ds/

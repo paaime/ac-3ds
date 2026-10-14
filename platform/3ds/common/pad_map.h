@@ -2,8 +2,8 @@
 #define AC3DS_PAD_MAP_H
 
 /* 3DS buttons and sticks -> GameCube pad: A/B/X/Y/START and the D-pad one to
- * one, L/R full analog presses, ZL/ZR as Z, SELECT left free; sticks scaled to
- * the GC's s8 range (the game's PADClamp applies the dead zone). */
+ * one, L/R full analog presses, ZL/ZR as Z, SELECT left free; sticks past a
+ * dead zone scaled to the GC's s8 range (the PC port's input skips PADClamp's). */
 
 #include <stdint.h>
 
@@ -41,7 +41,8 @@ enum {
     GC_PAD_START = 1u << 12,
 };
 
-#define PAD_MAP_STICK_RANGE 156 /* calibrated Circle Pad / C-Stick full tilt */
+#define PAD_MAP_STICK_RANGE     156 /* calibrated Circle Pad / C-Stick full tilt */
+#define PAD_MAP_STICK_DEAD_ZONE 18  /* PADClamp's 15 GC units (Padclamp.c) in Circle Pad units */
 
 typedef struct {
     uint32_t keys; /* hidKeysHeld() */
