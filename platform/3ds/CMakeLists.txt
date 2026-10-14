@@ -1,7 +1,7 @@
 # Animal Crossing (GAFE01) for New 3DS: the whole game. Configure from the repo root with
 # -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/3DS.cmake; platform/3ds/README.md has the rest.
 cmake_minimum_required(VERSION 3.16)
-project(ac3ds VERSION 0.1.0 LANGUAGES C CXX ASM)
+project(ac3ds VERSION 0.1.1 LANGUAGES C CXX ASM)
 
 if(NOT NINTENDO_3DS)
     message(FATAL_ERROR "Configure with -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/3DS.cmake")
