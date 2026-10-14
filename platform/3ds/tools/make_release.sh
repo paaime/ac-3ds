@@ -89,13 +89,33 @@ echo "== $OUT/$NAME.zip"
 (cd "$STAGE" && shasum -a 256 ac3ds.3dsx ac3ds.cia) && shasum -a 256 "$OUT/$NAME.zip" | sed "s|$OUT/||"
 
 QR=$OUT/$NAME-fbi-qr.png
+QR_URL=""
+RELEASE_URL=${SOURCE_URL%/}/releases/download/v$VERSION
+rm -f "$QR"
 if [ -z "$SOURCE_URL" ] || [ -n "$DIRTY" ]; then
     echo "make_release: no FBI QR code without --source-url, or for a test package" >&2
 elif QRENCODE=$(command -v "${QRENCODE:-qrencode}"); then
-    CIA_URL=${SOURCE_URL%/}/releases/download/v$VERSION/ac3ds.cia
-    "$QRENCODE" -o "$QR" -l M -s 8 -m 2 "$CIA_URL"
-    echo "== $QR: $CIA_URL"
-    echo "== upload to release v$VERSION: $NAME.zip, $NAME/ac3ds.cia, $NAME-fbi-qr.png"
+    "$QRENCODE" -o "$QR" -l M -s 8 -m 2 "$RELEASE_URL/ac3ds.cia"
+    QR_URL=$RELEASE_URL/$NAME-fbi-qr.png
+    echo "== $QR: $RELEASE_URL/ac3ds.cia"
 else
     echo "make_release: qrencode not found (QRENCODE or PATH): no FBI QR code" >&2
+fi
+
+# The release notes: res/release-notes.md, with the FBI section only when there is a QR code.
+NOTES=$OUT/$NAME-notes.md
+if [ -n "$QR_URL" ]; then
+    sed -e '/^@FBI@$/d' -e '/^@END_FBI@$/d' -e "s|@QR_URL@|$QR_URL|" -e "s|@VERSION@|$VERSION|g" \
+        "$RES/release-notes.md" > "$NOTES"
+else
+    sed -e '/^@FBI@$/,/^@END_FBI@$/d' -e "s|@VERSION@|$VERSION|g" "$RES/release-notes.md" > "$NOTES"
+fi
+echo "== $NOTES: write what's new and the known issues"
+if [ -n "$SOURCE_URL" ] && [ -z "$DIRTY" ]; then
+    REPO=${SOURCE_URL%/}
+    FILES="\"$OUT/$NAME.zip\" \"$STAGE/ac3ds.cia\""
+    [ -z "$QR_URL" ] || FILES="$FILES \"$QR\""
+    echo "== then, with v$VERSION tagged and pushed:"
+    echo "gh release create v$VERSION --repo ${REPO#https://github.com/} --verify-tag \\"
+    echo "  --title \"Animal Crossing 3DS $VERSION\" --notes-file \"$NOTES\" $FILES"
 fi

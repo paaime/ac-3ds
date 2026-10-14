@@ -85,10 +85,13 @@ platform/3ds/tools/make_release.sh --source-url https://…   # → build/releas
 It configures and builds the player build in its own folder (`build/3ds-release`), makes the `.cia`, and packs
 both with the player's `README.txt` and the licences (`res/`). The zip holds exactly those files, so nothing
 else can slip in. With `--source-url`, it also draws `ac3ds-<version>-fbi-qr.png` for FBI's Remote Install:
-the address of `ac3ds.cia` in the GitHub release tagged `v<version>`, so upload the zip, `ac3ds.cia` (from the
-`ac3ds-<version>` folder) and the QR code there. It needs `qrencode` (`brew install qrencode`, or `QRENCODE`);
-without it the script says so and goes on. The sources must be committed, since the readme names the commit; `--allow-dirty` makes a
-test package named `-dirty`. The version is `project(ac3ds VERSION …)` in `CMakeLists.txt`. It shows on the
+the address of `ac3ds.cia` in the GitHub release tagged `v<version>`. It needs `qrencode` (`brew install
+qrencode`, or `QRENCODE`); without it the script says so and goes on. Then it writes the release notes,
+`ac3ds-<version>-notes.md`, from `res/release-notes.md` (the parts that stay the same, and the QR code's image),
+and prints the `gh release create` command that uploads the zip, `ac3ds.cia` and the QR code with them: write
+what's new and the known issues in the notes, push the version's commit and its tag `v<version>`, then run it.
+The sources must be committed, since the readme names the commit; `--allow-dirty` makes a test package named
+`-dirty`. The version is `project(ac3ds VERSION …)` in `CMakeLists.txt`. It shows on the
 loading screen, in the log's first line and in the Homebrew Launcher.
 
 - **The `.cia`** needs two tools devkitPro doesn't ship: `makerom` (3DSGuy/Project_CTR) and, for its banner,
