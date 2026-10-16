@@ -5,9 +5,9 @@
 typedef enum {
     KIND_ALWAYS,
     KIND_NEVER,
-    KIND_LOWER, /* alpha >= threshold */
-    KIND_UPPER, /* alpha <= threshold */
-    KIND_OTHER, /* EQUAL, NOTEQUAL */
+    KIND_LOWER,
+    KIND_UPPER,
+    KIND_OTHER,
     KIND_INVALID,
 } BoundKind;
 
@@ -18,7 +18,6 @@ typedef struct {
     uint8_t ref;
 } Bound;
 
-/* One GX compare as a bound on alpha; trivially true/false ones are folded. */
 static Bound classify(uint8_t func, uint8_t ref)
 {
     Bound b = { KIND_OTHER, 0, func, ref };
@@ -56,7 +55,7 @@ static GxAlphaTest single(const Bound* b, bool exact)
 static GxAlphaTest merge_and(const Bound* b0, const Bound* b1)
 {
     if (b0->kind == KIND_LOWER && b1->kind == KIND_LOWER) {
-        return single(b0->threshold >= b1->threshold ? b0 : b1, true); /* the stricter */
+        return single(b0->threshold >= b1->threshold ? b0 : b1, true);
     }
     if (b0->kind == KIND_UPPER && b1->kind == KIND_UPPER) {
         return single(b0->threshold <= b1->threshold ? b0 : b1, true);
@@ -64,7 +63,7 @@ static GxAlphaTest merge_and(const Bound* b0, const Bound* b1)
     if (b0->kind == KIND_UPPER && b1->kind == KIND_LOWER) {
         return single(b1, false); /* a range: keep the lower bound (cut-out edges) */
     }
-    return single(b0, false); /* a range with b0 the lower bound, or EQUAL/NOTEQUAL */
+    return single(b0, false);
 }
 
 GxAlphaTest gx_alpha_test_merge(uint8_t comp0, uint8_t ref0, uint8_t op, uint8_t comp1, uint8_t ref1)

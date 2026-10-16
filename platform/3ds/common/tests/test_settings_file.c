@@ -1,4 +1,3 @@
-/* Host tests for settings_file.c. */
 #include "settings_file.h"
 #include "light_timer.h"
 
@@ -40,12 +39,9 @@ static void test_parse_accepts_numbers_spacing_and_crlf(void)
     Settings s = settings_parse(settings_defaults(), "  skip_resetti=1\r\npicture_shape =4:3\r\nfast_flush\t=  1");
     CHECK(settings_get(s, SETTING_SKIP_RESETTI));
     CHECK(settings_value(s, SETTING_PICTURE_SHAPE) == PICTURE_4_3);
-    CHECK(settings_get(s, SETTING_FAST_FLUSH)); /* last line, no newline */
+    CHECK(settings_get(s, SETTING_FAST_FLUSH));
 }
 
-/* Continuous camera is on until turned off (the PC port's default too),
- * Picture shape is Wide; the rest start off. A file without a setting's line
- * keeps its default. */
 static void test_defaults(void)
 {
     Settings s = settings_defaults();
@@ -75,13 +71,13 @@ static void test_parse_ignores_comments_unknown_keys_and_bad_values(void)
     Settings s = settings_parse(base, "# skip_resetti = on\n"
                                       "unknown = on\n"
                                       "fast_flush = maybe\n"
-                                      "picture_shape = on\n" /* not one of wide/4:3/stretch */
-                                      "picture_shape = 3\n"  /* past its last choice */
-                                      "start_view = stats\n" /* a removed setting, in older files */
+                                      "picture_shape = on\n"
+                                      "picture_shape = 3\n"
+                                      "start_view = stats\n"
                                       "no equals sign\n"
                                       "= on\n"
                                       "\n");
-    CHECK(settings_get(s, SETTING_FAST_FLUSH)); /* kept from base */
+    CHECK(settings_get(s, SETTING_FAST_FLUSH));
     CHECK(!settings_get(s, SETTING_SKIP_RESETTI));
     CHECK(settings_value(s, SETTING_PICTURE_SHAPE) == PICTURE_WIDE);
 }
@@ -105,7 +101,7 @@ static void test_format_round_trips(void)
     CHECK(n > 0 && n == strlen(text));
     CHECK(strstr(text, "skip_resetti = on\n") != NULL);
     CHECK(strstr(text, "picture_shape = 4:3\n") != NULL);
-    CHECK(strstr(text, "start_view") == NULL); /* removed */
+    CHECK(strstr(text, "start_view") == NULL);
     CHECK(strstr(text, "fast_flush = off\n") != NULL);
     Settings back = settings_parse(settings_defaults(), text);
     for (int id = 0; id < SETTING_COUNT; id++) {
@@ -121,7 +117,7 @@ static void test_format_reports_a_buffer_too_small(void)
     char full[SETTINGS_TEXT_MAX];
     size_t n = settings_format(settings_defaults(), full, sizeof(full));
     char cut[SETTINGS_TEXT_MAX];
-    CHECK(settings_format(settings_defaults(), cut, n) == 0); /* room for all but the last line's end */
+    CHECK(settings_format(settings_defaults(), cut, n) == 0);
 }
 
 static void test_toggle_returns_a_copy(void)
@@ -132,7 +128,7 @@ static void test_toggle_returns_a_copy(void)
     CHECK(settings_get(t, SETTING_FAST_FLUSH));
     CHECK(!settings_get(t, SETTING_SKIP_RESETTI));
     CHECK(!settings_get(settings_toggle(t, SETTING_FAST_FLUSH), SETTING_FAST_FLUSH));
-    Settings same = settings_toggle(s, SETTING_COUNT); /* out of range: unchanged */
+    Settings same = settings_toggle(s, SETTING_COUNT);
     CHECK(memcmp(&same, &s, sizeof(s)) == 0);
 }
 
@@ -170,7 +166,7 @@ static void test_switches_and_choices(void)
     CHECK(settings_is_switch(SETTING_FAST_TEXT));
     CHECK(settings_is_switch(SETTING_SHARP_TEXTURES));
     CHECK(settings_is_switch(SETTING_DUMP_TEXTURES));
-    CHECK(!settings_is_switch(SETTING_PICTURE_SHAPE)); /* Wide, 4:3 or Stretch: none is "off" */
+    CHECK(!settings_is_switch(SETTING_PICTURE_SHAPE));
     CHECK(settings_is_switch(SETTING_CONTINUOUS_CAMERA));
     CHECK(!settings_is_switch(SETTING_COUNT));
 }
@@ -186,7 +182,7 @@ static void test_pages(void)
         for (int n = 0; n < size; n++) {
             SettingId id = settings_on_page((SettingsPage)p, n);
             CHECK(id < SETTING_COUNT);
-            CHECK((int)id > (int)last); /* in the settings' own order */
+            CHECK((int)id > (int)last);
             last = id;
             if (id < SETTING_COUNT) {
                 seen[id]++;
@@ -196,24 +192,22 @@ static void test_pages(void)
         CHECK(settings_on_page((SettingsPage)p, -1) == SETTING_COUNT);
     }
     for (int id = 0; id < SETTING_COUNT; id++) {
-        CHECK(seen[id] == 1); /* every setting on exactly one page */
+        CHECK(seen[id] == 1);
     }
     CHECK(settings_on_page(SETTINGS_PAGE_GAME, 0) == SETTING_SKIP_RESETTI);
-    CHECK(settings_on_page(SETTINGS_PAGE_GAME, 1) == SETTING_PICTURE_SHAPE);  /* on the first sheet */
+    CHECK(settings_on_page(SETTINGS_PAGE_GAME, 1) == SETTING_PICTURE_SHAPE);
     CHECK(settings_on_page(SETTINGS_PAGE_GAME, 2) == SETTING_CONTINUOUS_CAMERA);
     CHECK(settings_on_page(SETTINGS_PAGE_GAME, 3) == SETTING_SHARP_TEXTURES);
-    CHECK(settings_on_page(SETTINGS_PAGE_GAME, 4) == SETTING_FAST_TEXT);      /* the second sheet's first */
+    CHECK(settings_on_page(SETTINGS_PAGE_GAME, 4) == SETTING_FAST_TEXT);
     CHECK(settings_on_page(SETTINGS_PAGE_GAME, 5) == SETTING_SHOP_WITHOUT_VISITOR);
-    CHECK(settings_on_page(SETTINGS_PAGE_GAME, 6) == SETTING_NO_WEEDS); /* the town's helpers together */
+    CHECK(settings_on_page(SETTINGS_PAGE_GAME, 6) == SETTING_NO_WEEDS);
     CHECK(settings_page_size(SETTINGS_PAGE_GAME) == 8);
-    CHECK(settings_on_page(SETTINGS_PAGE_TESTING, 3) == SETTING_DUMP_TEXTURES); /* a developer's tool, last */
+    CHECK(settings_on_page(SETTINGS_PAGE_TESTING, 3) == SETTING_DUMP_TEXTURES);
     CHECK(settings_on_page(SETTINGS_PAGE_TESTING, 0) == SETTING_FAST_FLUSH);
     CHECK(settings_page_size(SETTINGS_PAGE_COUNT) == 0);
     CHECK(settings_page_name(SETTINGS_PAGE_COUNT)[0] == '\0');
 }
 
-/* The player build (not the developer's) offers the Game page only: the
- * Testing page's settings count as off there, whatever the file says. */
 static void test_pages_per_build(void)
 {
     CHECK(settings_page_count(true) == SETTINGS_PAGE_COUNT);
@@ -229,8 +223,7 @@ static void test_pages_per_build(void)
     CHECK(!settings_offered(SETTING_COUNT, true));
 }
 
-/* The game's font has pictures at some ASCII codes (';' a droplet, '*' a
- * tilde, '/' a note): page texts keep to what it draws as itself. */
+/* The game's font draws some ASCII as pictures: ';' a droplet, '*' a tilde, '/' a note. */
 static bool font_safe(const char* s)
 {
     for (; *s != '\0'; s++) {
@@ -270,8 +263,6 @@ static void test_light_note_quotes_the_timeout(void)
     CHECK(strstr(settings_note(SETTING_BOTTOM_LIGHT_SAVER), seconds) != NULL);
 }
 
-/* The switch also runs the start-up GPU checks: its
- * note says so, and when it applies. */
 static void test_detailed_log_note_names_the_gpu_checks(void)
 {
     const char* note = settings_note(SETTING_VERBOSE_LOG);
@@ -279,9 +270,6 @@ static void test_detailed_log_note_names_the_gpu_checks(void)
     CHECK(strstr(note, "next start") != NULL);
 }
 
-/* Picture shape is a choice of three: Wide (the default: more of the world at
- * the sides), 4:3 (the GameCube's, with bars) and Stretch (the 4:3 picture
- * stretched). A tap moves to the next, after the last back to the first. */
 static void test_picture_shape_has_three_choices(void)
 {
     Settings s = settings_defaults();
@@ -293,11 +281,9 @@ static void test_picture_shape_has_three_choices(void)
     CHECK(settings_value(t, SETTING_PICTURE_SHAPE) == PICTURE_STRETCH);
     CHECK(strcmp(settings_value_text(t, SETTING_PICTURE_SHAPE), "Stretch") == 0);
     CHECK(settings_value(settings_toggle(t, SETTING_PICTURE_SHAPE), SETTING_PICTURE_SHAPE) == PICTURE_WIDE);
-    CHECK(settings_value(s, SETTING_PICTURE_SHAPE) == PICTURE_WIDE); /* toggling returned copies */
+    CHECK(settings_value(s, SETTING_PICTURE_SHAPE) == PICTURE_WIDE);
 }
 
-/* Older files said "wide" (then a stretched picture) or "4:3", or 0 / 1:
- * those keep working; the new choice reads as "stretch" or 2. */
 static void test_picture_shape_in_the_file(void)
 {
     Settings base = settings_defaults();
@@ -308,7 +294,7 @@ static void test_picture_shape_in_the_file(void)
     Settings four = settings_parse(base, "picture_shape = 4:3\n");
     CHECK(settings_value(settings_parse(four, "picture_shape = wide\n"), SETTING_PICTURE_SHAPE) == PICTURE_WIDE);
     CHECK(settings_value(settings_parse(four, "picture_shape = 0\n"), SETTING_PICTURE_SHAPE) == PICTURE_WIDE);
-    CHECK(settings_value(settings_parse(base, "skip_resetti = 2\n"), SETTING_SKIP_RESETTI) == 0); /* a switch has two */
+    CHECK(settings_value(settings_parse(base, "skip_resetti = 2\n"), SETTING_SKIP_RESETTI) == 0);
     char text[SETTINGS_TEXT_MAX];
     settings_format(settings_set_value(base, SETTING_PICTURE_SHAPE, PICTURE_STRETCH), text, sizeof(text));
     CHECK(strstr(text, "picture_shape = stretch\n") != NULL);
@@ -321,7 +307,7 @@ static void test_values_and_their_range(void)
     CHECK(settings_choice_count(SETTING_COUNT) == 0);
     CHECK(settings_value(s, SETTING_COUNT) == 0);
     CHECK(settings_value(settings_set(s, SETTING_FAST_TEXT, true), SETTING_FAST_TEXT) == 1);
-    Settings same = settings_set_value(s, SETTING_PICTURE_SHAPE, PICTURE_SHAPE_COUNT); /* no such choice */
+    Settings same = settings_set_value(s, SETTING_PICTURE_SHAPE, PICTURE_SHAPE_COUNT);
     CHECK(memcmp(&same, &s, sizeof(s)) == 0);
     same = settings_set_value(s, SETTING_PICTURE_SHAPE, -1);
     CHECK(memcmp(&same, &s, sizeof(s)) == 0);
@@ -330,15 +316,13 @@ static void test_values_and_their_range(void)
     CHECK(settings_get(settings_set_value(s, SETTING_PICTURE_SHAPE, PICTURE_4_3), SETTING_PICTURE_SHAPE));
 }
 
-/* "No weeds" keeps the game's own flag up (Wisp's wish): it acts as the town
- * loads, which the note says. A switch, off until turned on. */
 static void test_no_weeds(void)
 {
     CHECK(settings_is_switch(SETTING_NO_WEEDS));
     CHECK(!settings_get(settings_defaults(), SETTING_NO_WEEDS));
     CHECK(settings_get(settings_parse(settings_defaults(), "no_weeds = on\n"), SETTING_NO_WEEDS));
     CHECK(strstr(settings_note(SETTING_NO_WEEDS), "town") != NULL);
-    CHECK(settings_offered(SETTING_NO_WEEDS, false)); /* the player build has it */
+    CHECK(settings_offered(SETTING_NO_WEEDS, false));
 }
 
 int main(void)

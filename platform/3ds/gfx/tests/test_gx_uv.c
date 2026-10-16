@@ -1,4 +1,3 @@
-/* Host tests for gx_uv.c. */
 #include "gx_uv.h"
 
 #include <math.h>
@@ -18,7 +17,6 @@ static int failures = 0;
 
 #define NEAR_EQ(a, b) (fabsf((a) - (b)) < 1e-5f)
 
-/* What the vertex shader does: (s, t) = rows . (s_in, t_in, 0, 1). */
 static void shade(const float r0[4], const float r1[4], float s, float t, float* out_s, float* out_t)
 {
     *out_s = r0[0] * s + r0[1] * t + r0[3];
@@ -38,10 +36,9 @@ static void test_scale_multiplies_the_rows(void)
 
 static void test_apply_after_a_texture_matrix(void)
 {
-    /* texture matrix: s' = 2s + 0.1, t' = t + 0.5 */
     const float r0[4] = { 2, 0, 0, 0.1f };
     const float r1[4] = { 0, 1, 0, 0.5f };
-    GxUvAffine swap = { { { 0, 1, 0 }, { 1, 0, 0 } } }; /* (s, t) -> (t, s) */
+    GxUvAffine swap = { { { 0, 1, 0 }, { 1, 0, 0 } } };
     float o0[4], o1[4], s, t;
     gx_uv_apply(swap, r0, r1, o0, o1);
     shade(o0, o1, 1.0f, 2.0f, &s, &t);
@@ -84,8 +81,6 @@ static void test_rotated_copy_stays_inside_the_copied_area(void)
 
 static void test_rotated_copy_turns_screen_axes_into_framebuffer_axes(void)
 {
-    /* Moving right on screen (s) walks the framebuffer's 400-pixel axis
-     * (texture t); moving down (t) walks its 240-pixel axis (texture s). */
     GxUvAffine a = copy_mapping();
     CHECK(NEAR_EQ(a.m[0][0], 0.0f) && NEAR_EQ(fabsf(a.m[0][1]), 240.0f / 256.0f));
     CHECK(NEAR_EQ(a.m[1][1], 0.0f) && NEAR_EQ(fabsf(a.m[1][0]), 400.0f / 512.0f));
@@ -93,9 +88,7 @@ static void test_rotated_copy_turns_screen_axes_into_framebuffer_axes(void)
 
 static void test_rotated_copy_orientation(void)
 {
-    /* Checked in Azahar: the screen's left edge is framebuffer row 0 (texture
-     * t = 1) and its top edge the framebuffer's last column (texture s =
-     * 240/256); the bottom-right corner is row 399, column 0. */
+    /* Seen in Azahar: screen left edge = framebuffer row 0 (t = 1), top edge = last column (s = 240/256). */
     GxUvAffine a = copy_mapping();
     float s, t;
     map(a, 0.0f, 0.0f, &s, &t);
@@ -106,7 +99,6 @@ static void test_rotated_copy_orientation(void)
 
 static void test_source_rectangle_selects_part_of_the_screen(void)
 {
-    /* A copy of the EFB's right half: its s = 0 is the screen's middle. */
     GxUvCopyLayout full = { 240, 400, 256, 512, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
     GxUvCopyLayout right = { 240, 400, 256, 512, 0.5f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
     GxUvAffine a = gx_uv_rotated_copy(full);
@@ -132,8 +124,6 @@ static bool same_affine(GxUvAffine a, GxUvAffine b)
     return true;
 }
 
-/* With the 4:3 picture in the screen's middle (x 0.1..0.9 of it), the copy's
- * EFB area lands there in the framebuffer: as a whole-screen copy of that part. */
 static void test_image_area_places_the_copy(void)
 {
     GxUvCopyLayout pillar = { 240, 400, 256, 512, 0.0f, 0.0f, 1.0f, 1.0f, 0.1f, 0.0f, 0.8f, 1.0f };

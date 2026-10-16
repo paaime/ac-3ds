@@ -1,4 +1,3 @@
-/* nes_audio_3ds.c - NES sound (see nes_audio_3ds.h). */
 #include "pc_platform.h"
 
 #include <stdio.h>
@@ -11,13 +10,13 @@
 #include "ndsp_stream_3ds.h"
 #include "pcm_stereo.h"
 
-#define FULL_VOLUME  1.0f /* the console's own slider sets the volume */
-#define NES_CHANNEL  1    /* the game's mixer has channel 0 (audio_out_3ds.c) */
-#define SLOT_COUNT   6    /* ~100 ms: one ~545-sample chunk per NES frame at 60 Hz */
+#define FULL_VOLUME  1.0f
+#define NES_CHANNEL  1 /* the game's mixer has channel 0 (audio_out_3ds.c) */
+#define SLOT_COUNT   6 /* ~100 ms: one ~545-sample chunk per NES frame at 60 Hz */
 #define SLOT_FRAMES  1024
 #define MAX_SAMPLES  SLOT_FRAMES
-#define PRIME_FRAMES 3    /* NES frames queued before playing: ~50 ms */
-#define PRIME_RATE   61   /* a little over the NES's 60.1 Hz, so three chunks are enough */
+#define PRIME_FRAMES 3
+#define PRIME_RATE   61 /* a little over the NES's 60.1 Hz, so three chunks are enough */
 
 static NdspStream s_stream;
 static uint32_t s_rate;
@@ -46,8 +45,6 @@ void nes_audio_write(const int16_t* mono, uint32_t samples, uint32_t sample_rate
     uint32_t n = samples < MAX_SAMPLES ? samples : MAX_SAMPLES;
     pcm_mono_to_stereo(s_stereo, mono, n);
     ndsp_stream_write(&s_stream, s_stereo, n);
-    /* One NES frame of sound per video frame: follow the feed rate (pitch moves
-     * with the game's speed) rather than run dry. */
     s_feed = feed_rate_add(s_feed, n, svcGetSystemTick());
     if (feed_rate_value(s_feed) != s_playing_rate) {
         s_playing_rate = feed_rate_value(s_feed);

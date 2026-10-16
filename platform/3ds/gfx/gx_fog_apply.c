@@ -1,4 +1,3 @@
-/* gx_fog_apply.c - GX fog on citro3d (see gx_fog_apply.h). */
 #include "gx_fog_apply.h"
 
 #include <3ds.h>
@@ -14,7 +13,7 @@ static struct {
     bool on_valid;
     uint32_t color;
     bool color_valid;
-} F; /* what was last handed to citro3d */
+} F;
 
 static bool same_fog(GxFogParams a, GxFogParams b)
 {

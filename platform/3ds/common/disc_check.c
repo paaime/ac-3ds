@@ -11,7 +11,7 @@ static bool ends_with_ci(const char* s, const char* suffix)
     size_t n = strlen(s);
     size_t m = strlen(suffix);
     if (n <= m) {
-        return false; /* the extension alone is no name */
+        return false;
     }
     for (size_t i = 0; i < m; i++) {
         if (tolower((unsigned char)s[n - m + i]) != suffix[i]) {

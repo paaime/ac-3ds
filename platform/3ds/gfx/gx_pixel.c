@@ -5,8 +5,7 @@
 
 #include "gx_alpha_test.h"
 
-/* The values last handed to citro3d: its setters mark the whole effect
- * block dirty (re-sent with the next draw) even when nothing changed. */
+/* Last values sent: citro3d's setters re-send the whole effect block even when nothing changed. */
 static struct {
     bool valid;
     GPU_TESTFUNC depth_func;
@@ -24,7 +23,6 @@ void gxp_invalidate(void)
     P.valid = false;
 }
 
-/* GXCompare -> GPU_TESTFUNC (the PICA orders them differently). */
 static GPU_TESTFUNC compare_direct(uint8_t gx)
 {
     static const GPU_TESTFUNC MAP[8] = { GPU_NEVER, GPU_LESS, GPU_EQUAL, GPU_LEQUAL,
@@ -32,8 +30,7 @@ static GPU_TESTFUNC compare_direct(uint8_t gx)
     return MAP[gx & 7];
 }
 
-/* GX depth compare -> PICA. citro3d's default depth map stores -z, so the
- * nearer fragment has the larger depth value: mirror the ordering compares. */
+/* citro3d's default depth map stores -z (nearer is larger): the ordering compares are mirrored. */
 static GPU_TESTFUNC compare_depth(uint8_t gx)
 {
     static const GPU_TESTFUNC MAP[8] = { GPU_NEVER, GPU_GREATER, GPU_EQUAL, GPU_GEQUAL,

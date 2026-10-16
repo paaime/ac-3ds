@@ -1,6 +1,3 @@
-/* audio_out_3ds.c - sound output through ndsp. The
- * DSP firmware from dsp_firmware_3ds.c is always handed over with
- * ndspUseComponent, so ndspInit never runs its own search. */
 #include <3ds.h>
 #include <stdio.h>
 #include <stdlib.h>

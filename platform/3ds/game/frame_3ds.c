@@ -1,4 +1,3 @@
-/* frame_3ds.c - the citro3d frame lifecycle (see frame_3ds.h). */
 #include "frame_3ds.h"
 
 #include <3ds.h>
@@ -13,7 +12,6 @@
 #include "settings_3ds.h"
 #include "trace_3ds.h"
 
-/* libctru: the linearAlloc pool (heap_3ds.c sets it up) */
 extern u32 __ctru_linear_heap;
 extern u32 __ctru_linear_heap_size;
 
@@ -21,7 +19,7 @@ extern u32 __ctru_linear_heap_size;
 #define TOP_WIDTH      400
 #define TOP_HEIGHT     240
 #define CLEAR_DEPTH    0 /* citro3d's default depth map: 0 is the far plane */
-#define GPU_CHECK_FRAMES 2 /* checked draw by draw with a detailed log */
+#define GPU_CHECK_FRAMES 2
 
 #define DISPLAY_TRANSFER_FLAGS                                                         \
     (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
@@ -36,9 +34,7 @@ static struct {
     Frame3dsStats stats;
 } F;
 
-/* C3D_Init leaves fragment lighting as the previous program left it (on
- * hardware; Azahar starts at 0), and binding NULL at once is a no-op: binding a
- * throwaway environment first makes the next draw write lighting off. */
+/* Fragment lighting keeps what the previous program left (Azahar starts at 0); binding NULL alone is a no-op. */
 static void switch_fragment_lighting_off(void)
 {
     static C3D_LightEnv unused;
@@ -49,7 +45,7 @@ static void switch_fragment_lighting_off(void)
 
 bool frame3ds_init(void)
 {
-    bool detailed = settings3ds_on(SETTING_VERBOSE_LOG); /* applies at start, as the log itself */
+    bool detailed = settings3ds_on(SETTING_VERBOSE_LOG);
     if (detailed) {
         gxg_log_gpu_state("before C3D_Init (left by the previous program)");
     }
@@ -83,7 +79,7 @@ void frame3ds_shutdown(void)
     }
     bottom3ds_shutdown();
     if (F.top != NULL) {
-        C3D_RenderTargetDelete(F.top); /* waits for the GPU */
+        C3D_RenderTargetDelete(F.top);
         F.top = NULL;
     }
     if (F.gx_ready) {
@@ -108,7 +104,7 @@ void frame3ds_begin(void)
     C3D_RenderTargetClear(F.top, C3D_CLEAR_ALL, gxr_clear_color(), CLEAR_DEPTH);
     C3D_FrameDrawOn(F.top);
     gxr_frame_begin(TOP_WIDTH, TOP_HEIGHT);
-    gxr_draw_bars(); /* the 4:3 picture's side bars: first, so never dropped for room */
+    gxr_draw_bars(); /* first, so never dropped for room */
     F.open = true;
     trace3ds_mark("game: drawing the frame (emu64 -> GX -> citro3d)");
 }
@@ -126,16 +122,14 @@ void frame3ds_end(void)
     uint64_t bottom_start = prof3ds_now();
     trace3ds_mark("frame end: bottom screen");
     bool bottom_drawn = bottom3ds_draw();
-    GxrStats all = gxr_stats(); /* with the bottom screen's draws */
+    GxrStats all = gxr_stats();
     TraceFrameStats ts = { all.draws, all.vertices, all.texture_uploads, all.texture_failures, gxe_copy_count(),
                            all.efb_copy_draws, all.fog_tables, all.cmd_words, all.dropped_draws,
                            all.max_draw_cmd_words, bottom_drawn };
     trace3ds_frame_stats(ts);
     prof3ds_add(PROF_STATUS, bottom_start);
     gxr_frame_end();
-    /* What C3D_FrameEnd(0) would do, split out to time it. The fast flush
-     * setting flushes only what the CPU wrote for the GPU, as it writes it;
-     * Azahar doesn't emulate the caches, so only hardware shows a miss. */
+    /* C3D_FrameEnd's flush, split out to time it; Azahar doesn't emulate caches: only hardware shows a miss. */
     if (!settings3ds_on(SETTING_FAST_FLUSH)) {
         trace3ds_mark("frame end: cache flush (GSPGPU_FlushDataCache)");
         uint64_t flush_start = prof3ds_now();

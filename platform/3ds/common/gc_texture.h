@@ -1,9 +1,6 @@
 #ifndef AC3DS_GC_TEXTURE_H
 #define AC3DS_GC_TEXTURE_H
 
-/* GameCube (GX) texture decoding to linear RGBA8: row 0 at the top, 0xRRGGBBAA
- * in a little-endian u32 (PICA200 GPU_RGBA8). */
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -31,8 +28,7 @@ typedef enum {
 
 #define GC_PALETTE_MAX_ENTRIES 256
 
-/* `big_endian`: entries still in disc byte order (ARAM/JSystem data), not yet
- * swapped like SWAP_U16 assets (emu64 reports those via pc_gx_tlut_set_native_le). */
+/* `big_endian`: still in disc byte order (ARAM/JSystem data), unlike the swapped SWAP_U16 assets. */
 typedef struct {
     const void* data;
     GcTlutFormat format;
@@ -46,8 +42,7 @@ uint32_t gc_decode_rgb565(uint16_t value);
 /* Includes block padding; 0 for an unknown format. */
 size_t gc_texture_size(GcTexFormat format, uint32_t width, uint32_t height);
 
-/* Missing palette entries decode as a grey ramp, as on PC. False (dst
- * untouched) on bad arguments or a C4/C8 texture without a palette. */
+/* dst: 0xRRGGBBAA texels (GPU_RGBA8), row 0 at the top; missing palette entries are a grey ramp. */
 bool gc_texture_decode(uint32_t* dst, const void* src, uint32_t width, uint32_t height,
                        GcTexFormat format, const GcPalette* palette);
 

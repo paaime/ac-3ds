@@ -1,6 +1,3 @@
-/* GX SDK frame, copy, FIFO and display-list entry points. citro3d owns the
- * command buffer and the frame (game/frame_3ds.c), so most only record state,
- * as in pc/src/pc_gx.c; GXCopyTex copies on the GPU (gx_efb.c). */
 #include <dolphin/gx.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,14 +15,12 @@ enum {
 static GXDrawDoneCallback s_draw_done_callback;
 static GxDlRecorder s_recorder;
 static struct {
-    u16 src[4]; /* left, top, width, height */
+    u16 src[4];
     u16 dst_width, dst_height;
 } s_copy;
 static bool s_warned_copy_failed;
 static bool s_warned_foreign_list;
 static bool s_warned_overflow;
-
-/* ---- init and FIFO ------------------------------------------------------- */
 
 GXFifoObj* GXInit(void* base, u32 size)
 {
@@ -58,7 +53,7 @@ void GXFlush(void) {}
 
 void GXPixModeSync(void) {}
 
-/* To the game a draw is always done: the callback runs right away. */
+/* To the game a draw is always done: the callback runs at once. */
 void GXSetDrawDone(void)
 {
     if (s_draw_done_callback != NULL) {
@@ -91,8 +86,6 @@ void GXReadXfRasMetric(u32* xf_wait_in, u32* xf_wait_out, u32* ras_busy, u32* cl
     *ras_busy = 0;
     *clocks = 0;
 }
-
-/* ---- display copy (EFB -> XFB) --------------------------------------------- */
 
 void GXSetCopyClear(GXColor clear_clr, u32 clear_z)
 {
@@ -145,8 +138,6 @@ void GXCopyDisp(void* dest, GXBool clear)
     (void)clear;
 }
 
-/* ---- texture copy (EFB -> texture) ----------------------------------------- */
-
 static bool record(u32 op, const u32* args, u32 count)
 {
     if (!gx_dl_recording(&s_recorder)) {
@@ -197,8 +188,6 @@ void GXSetTexCoordScaleManually(GXTexCoordID coord, GXBool enable, u16 ss, u16 t
     (void)ts;
 }
 
-/* ---- display-list recorder -------------------------------------------------- */
-
 void GXBeginDisplayList(void* list, u32 size)
 {
     s_recorder = gx_dl_begin(list, size);
@@ -228,7 +217,6 @@ static void replay_command(uint32_t op, const uint32_t* a, uint32_t count, void*
     }
 }
 
-/* emu64 calls this for the lists m_play recorded (gGXCallDisplayList). */
 void GXCallDisplayList(void* list, u32 nbytes)
 {
     if (gx_dl_replay(list, nbytes, replay_command, NULL) == 0 && nbytes != 0 && !s_warned_foreign_list) {

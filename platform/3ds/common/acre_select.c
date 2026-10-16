@@ -10,7 +10,7 @@ AcreSelect acre_select_none(void)
 
 AcreSelect acre_select_tap(AcreSelect s, int col, int row, int player_col, int player_row, uint64_t now_ms)
 {
-    (void)s; /* a tap replaces what was chosen */
+    (void)s;
     if (col == player_col && row == player_row) {
         return acre_select_none();
     }

@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <string.h>
 
-/* Whole words while they fit, or a too-long word's first `width` characters. */
 static int fill_line(const char** p, int width, char* line)
 {
     const char* s = *p;
@@ -22,7 +21,7 @@ static int fill_line(const char** p, int width, char* line)
             s = word;
             break;
         }
-        if (needed > width) { /* alone and still too long: cut it */
+        if (needed > width) {
             memcpy(line, word, (size_t)width);
             len = width;
             s = word + width;

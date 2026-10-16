@@ -24,7 +24,7 @@ typedef struct {
     uint8_t tlut_format;
     uint16_t tlut_count;
     bool tlut_big_endian;
-    uint8_t pad_wrap_s; /* PotPadWrap: how a padded axis is filled (EDGE if unpadded) */
+    uint8_t pad_wrap_s;
     uint8_t pad_wrap_t;
 } TexIdent;
 
@@ -37,8 +37,8 @@ typedef struct {
 typedef struct {
     bool used;
     TexKey key;
-    uint32_t key_hash; /* tex_memo_hash of the key: compared before the key itself */
-    bool dumped;       /* handed to the dump hook */
+    uint32_t key_hash;
+    bool dumped;
     C3D_Tex tex;
     GxtcBinding binding;
     uint32_t last_frame;
@@ -48,16 +48,14 @@ typedef struct {
 static Entry s_entries[MAX_ENTRIES];
 static uint32_t s_frame;
 static uint32_t s_uploads;
-static uint64_t s_upload_ticks; /* this frame's decode + tiling time */
+static uint64_t s_upload_ticks;
 static uint32_t s_upload_serial;
 static uint32_t s_bytes;
-/* The entry each texture found in this drawing pass: within a pass its texels
- * can't change (emu64's conversion buffers only rewind at a pass's start), so
- * a texture drawn again needs no new hash (tex_memo.h). */
+/* Within a pass texels can't change: emu64's conversion buffers rewind only at a pass's start. */
 static TexMemoSlot s_memo[TEX_MEMO_SLOTS];
 static GxtcDumpWantFn s_dump_want;
 static GxtcDumpSaveFn s_dump_save;
-static uint32_t s_memo_epoch; /* the memo's "frame": one per pass, from 1 */
+static uint32_t s_memo_epoch;
 
 static uint32_t sample_hash(const void* data, size_t size)
 {
@@ -70,7 +68,7 @@ static uint32_t sample_hash(const void* data, size_t size)
     return first ^ (last * HASH_COMBINE);
 }
 
-/* Padding zeroed: the identity is hashed and compared whole. 0: can't be decoded. */
+/* Padding zeroed: hashed and compared whole. 0 if it can't be decoded. */
 static size_t make_ident(const GxbTexObj* obj, const GxbTlut* tlut, TexIdent* id)
 {
     size_t size = gc_texture_size((GcTexFormat)obj->format, obj->width, obj->height);
@@ -93,7 +91,6 @@ static size_t make_ident(const GxbTexObj* obj, const GxbTlut* tlut, TexIdent* id
     return size;
 }
 
-/* Like the PC cache: the first and last 256 bytes, and the whole palette. */
 static TexKey make_key(const TexIdent* id, size_t size)
 {
     TexKey key;
@@ -126,8 +123,7 @@ static Entry* find(const TexKey* key, uint32_t key_hash)
     return NULL;
 }
 
-/* An entry used this frame can't have been evicted since (free_slot); the
- * identity check rules out a memo collision. */
+/* free_slot never evicts an entry used this frame. */
 static Entry* find_this_frame(uint32_t ident_hash, const TexIdent* id)
 {
     int i = tex_memo_get(s_memo, ident_hash, s_memo_epoch);
@@ -154,7 +150,7 @@ static Entry* free_slot(void)
     if (oldest != NULL) {
         free_entry(oldest);
     }
-    return oldest; /* NULL if every entry is used this frame */
+    return oldest;
 }
 
 static bool decode_linear(uint32_t* linear, const GxbTexObj* obj, const GxbTlut* tlut)
@@ -166,7 +162,7 @@ static bool decode_linear(uint32_t* linear, const GxbTexObj* obj, const GxbTlut*
     return gc_texture_decode(linear, obj->data, obj->width, obj->height, (GcTexFormat)obj->format, &palette);
 }
 
-/* Each padded axis filled by its wrap mode (pot_pad.h). Caller frees. */
+/* Caller frees. */
 static uint32_t* decode_padded(const GxbTexObj* obj, const GxbTlut* tlut, uint32_t pw, uint32_t ph)
 {
     size_t texels = (size_t)obj->width * obj->height;
@@ -243,7 +239,6 @@ void gxtc_set_dump_hooks(GxtcDumpWantFn want, GxtcDumpSaveFn save)
     s_dump_save = save;
 }
 
-/* Once per entry; a failed save is retried on the next upload. */
 static void dump(Entry* e, const GxbTexObj* obj, const GxbTlut* tlut)
 {
     e->dumped = true;

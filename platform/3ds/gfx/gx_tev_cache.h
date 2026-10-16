@@ -1,10 +1,6 @@
 #ifndef AC3DS_GX_TEV_CACHE_H
 #define AC3DS_GX_TEV_CACHE_H
 
-/* Remembered TEV translations, keyed by the setup's
- * meaningful part (stage count, used stages, colour registers, konst colours),
- * direct-mapped and checked byte for byte. Failed translations aren't kept. */
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -16,7 +12,7 @@ typedef bool (*GxTevTranslateFn)(const GxTevConfig* gx, PicaCombiner* out, const
 
 typedef struct {
     bool used;
-    GxTevConfig key; /* the setup with its unused stages zeroed */
+    GxTevConfig key;
     PicaCombiner combiner;
 } GxTevCacheSlot;
 
@@ -27,8 +23,7 @@ typedef struct {
 
 void gx_tev_cache_clear(GxTevCache* cache);
 
-/* NULL if it can't be translated (then `reason`, if not NULL, says why). The
- * result stays valid until the next call. */
+/* NULL if it can't be translated (`reason`, if not NULL, says why); valid until the next call. */
 const PicaCombiner* gx_tev_cache_get(GxTevCache* cache, const GxTevConfig* gx, GxTevTranslateFn translate,
                                      const char** reason);
 

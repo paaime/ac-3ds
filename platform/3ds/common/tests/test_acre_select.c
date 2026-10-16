@@ -1,4 +1,3 @@
-/* Host tests for acre_select.c. */
 #include <stdio.h>
 
 #include "../acre_select.h"
@@ -25,7 +24,7 @@ static bool shows(AcreSelect s, int player_col, int player_row, int col, int row
 static void test_the_players_acre_at_first(void)
 {
     CHECK(shows(acre_select_none(), 2, 1, 2, 1));
-    CHECK(shows(acre_select_none(), -1, -1, -1, -1)); /* off the map */
+    CHECK(shows(acre_select_none(), -1, -1, -1, -1));
     CHECK(!acre_select_step(acre_select_none(), 2, 1, 99999, TIMEOUT).active);
 }
 
@@ -47,7 +46,7 @@ static void test_it_lasts_a_while(void)
     AcreSelect s = acre_select_tap(acre_select_none(), 4, 5, 2, 1, 1000);
     CHECK(acre_select_step(s, 2, 1, 1000 + TIMEOUT - 1, TIMEOUT).active);
     CHECK(!acre_select_step(s, 2, 1, 1000 + TIMEOUT, TIMEOUT).active);
-    AcreSelect again = acre_select_tap(s, 4, 5, 2, 1, 9000); /* a new tap starts the wait again */
+    AcreSelect again = acre_select_tap(s, 4, 5, 2, 1, 9000);
     CHECK(acre_select_step(again, 2, 1, 1000 + TIMEOUT, TIMEOUT).active);
 }
 
@@ -55,7 +54,7 @@ static void test_walking_into_another_acre_goes_back(void)
 {
     AcreSelect s = acre_select_tap(acre_select_none(), 4, 5, 2, 1, 1000);
     CHECK(!acre_select_step(s, 3, 1, 1100, TIMEOUT).active);
-    CHECK(!acre_select_step(s, -1, -1, 1100, TIMEOUT).active); /* off the map: indoors with no door, a scene change */
+    CHECK(!acre_select_step(s, -1, -1, 1100, TIMEOUT).active);
 }
 
 static void test_a_clock_going_back_keeps_it(void)
@@ -64,20 +63,19 @@ static void test_a_clock_going_back_keeps_it(void)
     CHECK(acre_select_step(s, 2, 1, 4000, TIMEOUT).active);
 }
 
-/* Town acres are the world's blocks 1..5 across and 1..6 down, 640 units
- * each; block 0 and the rest are the border, the beach and the sea. */
+/* Town acres are world blocks 1..5 across and 1..6 down, 640 units each; the rest is border and sea. */
 static void test_acre_of_a_world_position(void)
 {
     int col = -2;
     int row = -2;
     CHECK(acre_of_world(3 * 640.0f + 320.0f, 2 * 640.0f + 320.0f, 640.0f, 5, 6, &col, &row) && col == 2 &&
-          row == 1); /* B-3 */
+          row == 1);
     CHECK(acre_of_world(5 * 640.0f + 639.0f, 6 * 640.0f + 639.0f, 640.0f, 5, 6, &col, &row) && col == 4 &&
-          row == 5); /* F-5's far corner */
-    CHECK(!acre_of_world(100.0f, 2000.0f, 640.0f, 5, 6, &col, &row) && col == -1 && row == -1); /* border */
-    CHECK(!acre_of_world(2000.0f, 300.0f, 640.0f, 5, 6, &col, &row));                         /* the cliff */
-    CHECK(!acre_of_world(6 * 640.0f + 10.0f, 2000.0f, 640.0f, 5, 6, &col, &row));             /* past column 5 */
-    CHECK(!acre_of_world(2000.0f, 9 * 640.0f, 640.0f, 5, 6, &col, &row));                     /* the beach rows */
+          row == 5);
+    CHECK(!acre_of_world(100.0f, 2000.0f, 640.0f, 5, 6, &col, &row) && col == -1 && row == -1);
+    CHECK(!acre_of_world(2000.0f, 300.0f, 640.0f, 5, 6, &col, &row));
+    CHECK(!acre_of_world(6 * 640.0f + 10.0f, 2000.0f, 640.0f, 5, 6, &col, &row));
+    CHECK(!acre_of_world(2000.0f, 9 * 640.0f, 640.0f, 5, 6, &col, &row));
     CHECK(!acre_of_world(-5.0f, 700.0f, 640.0f, 5, 6, &col, &row));
 }
 

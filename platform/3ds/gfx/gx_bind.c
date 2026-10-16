@@ -1,4 +1,3 @@
-/* gx_bind.c - a draw's textures on the PICA's units (see gx_bind.h). */
 #include "gx_bind.h"
 
 #include <string.h>
@@ -10,8 +9,8 @@
 
 typedef struct {
     const C3D_Tex* tex;
-    uint32_t params; /* wrap and filter */
-    uint32_t serial; /* texture uploads + EFB copies when it was bound */
+    uint32_t params;
+    uint32_t serial;
     bool valid;
 } UnitBinding;
 
@@ -38,10 +37,11 @@ void gxbind_invalidate(void)
 
 static GPU_TEXTURE_WRAP_PARAM wrap_mode(uint8_t gx)
 {
+    /* GX_CLAMP 0, GX_REPEAT 1, GX_MIRROR 2 */
     switch (gx) {
-    case 1: return GPU_REPEAT;          /* GX_REPEAT */
-    case 2: return GPU_MIRRORED_REPEAT; /* GX_MIRROR */
-    default: return GPU_CLAMP_TO_EDGE;  /* GX_CLAMP */
+    case 1: return GPU_REPEAT;
+    case 2: return GPU_MIRRORED_REPEAT;
+    default: return GPU_CLAMP_TO_EDGE;
     }
 }
 
@@ -50,8 +50,7 @@ static GPU_TEXTURE_FILTER_PARAM filter_mode(uint8_t gx)
     return gx == 0 ? GPU_NEAREST : GPU_LINEAR; /* GX_NEAR */
 }
 
-/* The serial changes whenever texels may have changed (a reused cache slot, a
- * new EFB copy): the bind is then redone, which also clears the PICA's texture cache. */
+/* Rebinds when texels may have changed (the serial): binding also clears the PICA's texture cache. */
 void gxbind_texture(int unit, C3D_Tex* tex, GPU_TEXTURE_WRAP_PARAM wrap_s, GPU_TEXTURE_WRAP_PARAM wrap_t,
                     GPU_TEXTURE_FILTER_PARAM mag, GPU_TEXTURE_FILTER_PARAM min)
 {
@@ -68,8 +67,7 @@ void gxbind_texture(int unit, C3D_Tex* tex, GPU_TEXTURE_WRAP_PARAM wrap_s, GPU_T
     C3D_TexSetFilter(tex, mag, min);
     C3D_TexBind(unit, tex);
     *b = (UnitBinding){ tex, params, serial, true };
-    /* Wrap and filter belong to the C3D_Tex, not the unit: another unit bound
-     * to the same texture now has these settings too, so its entry is stale. */
+    /* Wrap and filter live in the C3D_Tex, not the unit: other units bound to it are now stale. */
     for (int u = 0; u < PICA_TEXTURE_UNITS; u++) {
         if (u != unit && B.units[u].valid && B.units[u].tex == tex && B.units[u].params != params) {
             B.units[u].valid = false;
@@ -77,9 +75,7 @@ void gxbind_texture(int unit, C3D_Tex* tex, GPU_TEXTURE_WRAP_PARAM wrap_s, GPU_T
     }
 }
 
-/* Every unit needs a texture, even one no draw samples: once the vertex shader
- * outputs texcoords, the real GPU hangs on a unit never given one (Azahar
- * doesn't). */
+/* Every unit needs a texture, even an unsampled one: the PICA200 hangs otherwise (Azahar doesn't). */
 static void bind_unused(int unit)
 {
     gxbind_texture(unit, B.fallback, GPU_CLAMP_TO_EDGE, GPU_CLAMP_TO_EDGE, GPU_NEAREST, GPU_NEAREST);
@@ -89,16 +85,14 @@ void gxbind_blit(C3D_Tex* tex)
 {
     gxbind_texture(0, tex, GPU_CLAMP_TO_EDGE, GPU_CLAMP_TO_EDGE, GPU_NEAREST, GPU_NEAREST);
     for (int unit = 1; unit < PICA_TEXTURE_UNITS; unit++) {
-        bind_unused(unit); /* in 4:3 the bars are a frame's first draw */
+        bind_unused(unit);
     }
 }
 
-/* A texture that can't be decoded (C14X2, bad size, cache full) samples the
- * white fallback, so the draw keeps its vertex and constant colours. */
 void gxbind_draw(const GxbState* st, const PicaCombiner* p, GxUvAffine uv[GXBIND_TEXGEN_UNITS], GxBindCounts* counts)
 {
     for (int unit = GXBIND_TEXGEN_UNITS; unit < PICA_TEXTURE_UNITS; unit++) {
-        bind_unused(unit); /* the shader has no texcoord for these */
+        bind_unused(unit);
     }
     for (int unit = 0; unit < GXBIND_TEXGEN_UNITS; unit++) {
         uv[unit] = gx_uv_scale(1.0f, 1.0f);
@@ -109,7 +103,7 @@ void gxbind_draw(const GxbState* st, const PicaCombiner* p, GxUvAffine uv[GXBIND
         }
         const GxbTexObj* obj = &st->texmap[map];
         C3D_Tex* copy = (C3D_Tex*)gxe_texture_for(obj->data, obj->width, obj->height, &uv[unit]);
-        if (copy != NULL) { /* the game's EFB copy buffer (gx_efb.h) */
+        if (copy != NULL) {
             GPU_TEXTURE_FILTER_PARAM f = filter_mode(obj->mag_filter);
             gxbind_texture(unit, copy, GPU_CLAMP_TO_EDGE, GPU_CLAMP_TO_EDGE, f, f);
             counts->efb_copy_draws++;

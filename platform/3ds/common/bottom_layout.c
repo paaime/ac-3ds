@@ -2,26 +2,25 @@
 
 #include <stddef.h>
 
-#define EDGE          4.0f   /* between the screen's edge and the button */
-#define BUTTON_W      56.0f  /* room for the label under the icon */
+#define EDGE          4.0f
+#define BUTTON_W      56.0f
 #define BUTTON_H      44.0f
 #define LABEL_GAP     1.0f
 #define LABEL_INSET_X 2.0f
-#define GLOW_GROW     3.0f   /* the Options page's disc, past the icon on each side */
+#define GLOW_GROW     3.0f
 #define CONTENT_PAD   6.0f
-#define GRID_W        196.0f /* the panel takes the rest of the width */
+#define GRID_W        196.0f
 #define TITLE_X       10.0f
 #define TITLE_H       28.0f
 #define ROW_H         36.0f
 #define ROW_GAP       2.0f
 #define ROW_INSET_X   8.0f
-#define PAGER_W       30.0f  /* the arrows' column */
+#define PAGER_W       30.0f
 #define PAGER_GAP     4.0f
 #define PAGE_TAB_W    96.0f
 #define PAGE_TAB_H    22.0f
 #define PAGE_TAB_GAP  6.0f
-/* The map menu's tiles in its units (m_map_ovl.c, mMP_set_map_dl): A-1's
- * centre, then 22 units per tile, rows going down. */
+/* The map menu's tiles (m_map_ovl.c, mMP_set_map_dl): A-1's centre, then 22 units a tile, rows going down. */
 #define MAP_TILE_FIRST_X 11.7f
 #define MAP_TILE_FIRST_Y 45.7f
 #define MAP_TILE_SIZE    22.0f
@@ -196,7 +195,7 @@ UnitBox bottom_layout_fit(UnitBox src, PxRect dst, float screen_w, float screen_
     }
     float per_unit_x = dst.w / src_w;
     float per_unit_y = dst.h / src_h;
-    float k = per_unit_x < per_unit_y ? per_unit_x : per_unit_y; /* px per unit */
+    float k = per_unit_x < per_unit_y ? per_unit_x : per_unit_y;
     float x = dst.x + (dst.w - src_w * k) / 2;
     float y = dst.y + (dst.h - src_h * k) / 2;
     UnitBox v;

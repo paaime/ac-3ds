@@ -1,5 +1,3 @@
-/* acres_3ds.c - "Continuous camera" (see acres_3ds.h). Applied each frame, as
- * the first day's intro and the boat ride switch the game's flag themselves. */
 #include "pc_platform.h"
 
 #include "ac_birth_control.h"
@@ -11,7 +9,7 @@
 #include "acres_3ds.h"
 #include "settings_3ds.h"
 
-int g_ac3ds_boat_ride; /* pc_platform.h: set by ac_boat_demo_move.c_inc */
+int g_ac3ds_boat_ride;
 static bool s_was_on;
 
 void acres3ds_frame(void)
@@ -22,7 +20,7 @@ void acres3ds_frame(void)
     bool continuous = settings3ds_on(SETTING_CONTINUOUS_CAMERA);
     AcreSync s = acre_sync(continuous, g_mPlib_wade_disabled != 0, s_was_on, scenes);
     if (s.refresh) {
-        aBC_RequestNearbyRefresh(); /* as pc_settings.c does when it's turned on */
+        aBC_RequestNearbyRefresh();
     }
     if (s.write) {
         g_mPlib_wade_disabled = s.value;

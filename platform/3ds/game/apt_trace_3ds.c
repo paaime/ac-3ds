@@ -1,6 +1,3 @@
-/* apt_trace_3ds.c - the HOME, sleep and exit steps, logged (see
- * apt_trace_3ds.h). A HOME's hooks run on the game thread, a sleep's partly on
- * libctru's APT thread. */
 #include <3ds.h>
 #include <stdio.h>
 
@@ -22,7 +19,7 @@ static void step(const char* stage)
     fprintf(stderr, "[apt] %llu ms: %s\n", (unsigned long long)clock3ds_ms(), stage);
 }
 
-/* Registered last, so called first. */
+/* libctru calls hooks newest first: registered last, this runs before citro3d's and ndsp's. */
 static void apt_first(APT_HookType type, void* param)
 {
     (void)param;
@@ -42,7 +39,6 @@ static void apt_first(APT_HookType type, void* param)
     }
 }
 
-/* Registered first, so called after citro3d's and ndsp's hooks. */
 static void apt_last(APT_HookType type, void* param)
 {
     (void)param;

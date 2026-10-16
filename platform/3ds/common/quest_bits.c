@@ -2,7 +2,7 @@
 
 /* Field widths in declaration order (include/m_quest.h). */
 #define FIELD_COUNT 6
-static const uint8_t WIDTH[FIELD_COUNT] = { 2, 6, 1, 4, 1, 2 }; /* 16 bits in all */
+static const uint8_t WIDTH[FIELD_COUNT] = { 2, 6, 1, 4, 1, 2 };
 #define UNIT_BITS 16
 
 static uint32_t gc_shift(int field)

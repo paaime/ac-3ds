@@ -1,10 +1,7 @@
 #ifndef AC3DS_AUDIO_PACER_H
 #define AC3DS_AUDIO_PACER_H
 
-/* Paces the audio mixer from the game thread: each video frame, mix until the
- * samples produced catch up with the system clock (so a slow frame rate doesn't
- * slow the music), at most AUDIO_PACER_MAX_MIXES times. A debt over a second (a
- * loading stall) is dropped, not mixed in a burst. */
+/* Frames here are audio sample frames; a debt over a second is dropped, not mixed in a burst. */
 
 #include <stdbool.h>
 #include <stdint.h>

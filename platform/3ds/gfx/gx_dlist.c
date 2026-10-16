@@ -72,7 +72,7 @@ uint32_t gx_dl_replay(const void* list, uint32_t nbytes, GxDlHandler handler, vo
         uint32_t header = get_word(p + off);
         uint32_t count = header & COUNT_MASK;
         if (count > GX_DL_MAX_ARGS || nbytes - off - WORD < WORD * count) {
-            break; /* malformed or cut short */
+            break;
         }
         uint32_t args[GX_DL_MAX_ARGS];
         memcpy(args, p + off + WORD, WORD * count);

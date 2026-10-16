@@ -1,10 +1,6 @@
 #ifndef AC3DS_GX_FOG_H
 #define AC3DS_GX_FOG_H
 
-/* GX fog (GXSetFog) as a PICA200 fog lookup table. The PICA looks up a *visibility*
- * (1 = no fog) by depth: with citro3d's default depth map, 1 at the near plane and 0
- * at the far one. */
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -19,14 +15,14 @@ enum {
 };
 
 typedef struct {
-    uint8_t type; /* GXFogType */
-    float start, end;       /* eye-space distances of the ramp */
-    float near_z, far_z;    /* the projection's planes */
+    uint8_t type;
+    float start, end;
+    float near_z, far_z;
 } GxFogParams;
 
 bool gx_fog_enabled(uint8_t type);
 
-/* Visibility (1 = clear) of a fragment at PICA depth `depth` (1 near, 0 far). */
+/* Visibility (1 = clear) at PICA depth `depth` (1 near, 0 far with citro3d's default depth map). */
 float gx_fog_visibility(GxFogParams p, float depth);
 
 /* data[0..127]: visibility at depth i / 128; data[128 + i]: data[i + 1] - data[i]. */

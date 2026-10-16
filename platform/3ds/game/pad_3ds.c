@@ -1,5 +1,3 @@
-/* pad_3ds.c - GameCube controller API on 3DS input (replaces pc/src/pc_pad.c).
- * Controller 1 is the 3DS (common/pad_map.c); the others read as idle, as on PC. */
 #include "pc_platform.h"
 
 #include <3ds.h>
@@ -55,7 +53,6 @@ static N3dsInput read_3ds_input(void)
     return in;
 }
 
-/* SELECT is unmapped for the game (pad_map.c), so it serves as a shift key. */
 void pad3ds_hotkeys(void)
 {
     u32 down = hidKeysDown();
@@ -66,7 +63,7 @@ void pad3ds_hotkeys(void)
         return;
     }
     if (select && (down & KEY_L)) {
-        gxd_arm(); /* log the next frame's draws (gx_debug.h) */
+        gxd_arm();
     }
     if (select && (down & KEY_R)) {
         bottom3ds_toggle();

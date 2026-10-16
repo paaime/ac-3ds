@@ -154,7 +154,7 @@ static void aBTD_pl_ride_on_end_wait(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play
         g_mPlib_wade_disabled = FALSE;
 #endif
 #ifdef TARGET_3DS
-        g_ac3ds_boat_ride = TRUE; /* the port's setting leaves the switch to the ride */
+        g_ac3ds_boat_ride = TRUE;
 #endif
         aBTD_setupAction(boat_demo, play, aBTD_ACTION_START_CALL_END_WAIT);
     }

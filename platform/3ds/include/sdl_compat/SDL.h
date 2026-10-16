@@ -1,5 +1,4 @@
-/* SDL.h — the SDL calls jaudio_NES/internal/os.c makes (game/sdl_compat_3ds.c).
- * Only that file has this directory on its include path. */
+/* The SDL calls jaudio_NES/internal/os.c makes (game/sdl_compat_3ds.c); only that file sees this directory. */
 #ifndef AC3DS_SDL_COMPAT_H
 #define AC3DS_SDL_COMPAT_H
 

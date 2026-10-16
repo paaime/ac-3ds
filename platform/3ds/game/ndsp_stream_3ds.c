@@ -1,14 +1,12 @@
-/* ndsp_stream_3ds.c - a stereo PCM16 stream on one ndsp channel (see
- * ndsp_stream_3ds.h). */
 #include <string.h>
 
 #include "ndsp_stream_3ds.h"
 #include "pcm_level.h"
 #include "wave_pool.h"
 
-#define BYTES_PER_FRAME 4 /* stereo s16 */
-#define DRAIN_POLL_NS   (1000LL * 1000) /* 1 ms */
-#define DRAIN_POLLS     20              /* a DSP frame is ~5 ms */
+#define BYTES_PER_FRAME 4
+#define DRAIN_POLL_NS   (1000LL * 1000)
+#define DRAIN_POLLS     20 /* a DSP frame is ~5 ms */
 
 _Static_assert((int)WAVE_SLOT_FREE == (int)NDSP_WBUF_FREE, "wave_pool states follow libctru");
 _Static_assert((int)WAVE_SLOT_QUEUED == (int)NDSP_WBUF_QUEUED, "wave_pool states follow libctru");
@@ -26,9 +24,8 @@ static void snapshot(const NdspStream* s, uint8_t* states, uint32_t* frames)
 static void setup_channel(int channel, float sample_rate, float volume)
 {
     float mix[12] = { 0 };
-    mix[0] = volume; /* front left */
-    mix[1] = volume; /* front right */
-    /* The output mode (mono/stereo/surround) stays the system setting ndspInit read. */
+    mix[0] = volume;
+    mix[1] = volume;
     ndspChnReset(channel);
     ndspChnSetInterp(channel, NDSP_INTERP_POLYPHASE);
     ndspChnSetRate(channel, sample_rate);

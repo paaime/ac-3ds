@@ -1,5 +1,3 @@
-/* town_map_3ds.c - the game's own town map, drawn by the game (see
- * town_map_3ds.h): its grid and acre bubble framed apart, at one scale. */
 #include "pc_platform.h"
 
 #include <string.h>
@@ -22,8 +20,7 @@
 #define ORTHO_FAR   800.0f
 #define ORTHO_SCALE 1.0f
 
-/* In the menus' units (kan_win_v): the grid's frame (kan_win_futiT_model) and
- * the acre's bubble with its heading (kan_win_wakuT_model). */
+/* In kan_win_v's units: the frames of kan_win_futiT_model (grid) and kan_win_wakuT_model (acre bubble). */
 static const UnitBox k_grid_box = { -9.0f, 121.0f, -86.0f, 66.0f };
 static const UnitBox k_panel_box = { -120.0f, -14.0f, -84.0f, 58.0f };
 
@@ -65,14 +62,13 @@ TownMapState town_map_read(void)
 {
     TownMapState s;
     memset(&s, 0, sizeof(s));
-    s.available = in_play_scene(); /* not the title demo, not NES games */
+    s.available = in_play_scene();
     if (s.available) {
         s.player_known = player_position((GAME_PLAY*)gamePT, &s.player_x, &s.player_z, &s.indoors);
     }
     return s;
 }
 
-/* mFont_CulcOrthoMatrix's kind of view, showing `box` in `place`. */
 static Mtx* framing(GRAPH* graph, UnitBox box, PxRect place)
 {
     UnitBox v = bottom_layout_fit(box, place, BOTTOM_SCREEN_W, BOTTOM_SCREEN_H);

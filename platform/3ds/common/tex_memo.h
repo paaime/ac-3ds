@@ -1,10 +1,7 @@
 #ifndef AC3DS_TEX_MEMO_H
 #define AC3DS_TEX_MEMO_H
 
-/* Per-frame memo of texture-cache lookups (gfx/gx_texcache.c): the game doesn't
- * write textures mid-frame, so a texture seen this frame needs no new hash. The
- * caller checks the entry's identity, so a collision costs a slow lookup, never
- * a wrong texture. Direct-mapped; frames count from 1 (0 is "never"). */
+/* Relies on the game not writing textures mid-frame. Frames count from 1 (0 is "never"). */
 
 #include <stddef.h>
 #include <stdint.h>

@@ -1,7 +1,7 @@
 #include "quick_save.h"
 
 #define DIRECTIONS     8
-#define DIRECTION_STEP 0x2000u /* 45 degrees */
+#define DIRECTION_STEP 0x2000u
 
 bool quick_save_allowed(QuickSaveCheck c)
 {

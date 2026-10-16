@@ -1,6 +1,3 @@
-/* GX SDK entry points emu64 uses, recorded in a GxbState
- * and drawn at GXEnd by gx_render.c. Semantics follow ACGC-PC-Port
- * pc/src/pc_gx.c (MIT) where the SDK is ambiguous. */
 #include <dolphin/gx.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -15,12 +12,10 @@ _Static_assert(sizeof(GxbTlut) <= sizeof(GXTlutObj), "GxbTlut must fit in GXTlut
 _Static_assert(sizeof(GxbLight) <= sizeof(GXLightObj), "GxbLight must fit in GXLightObj");
 
 static GxbState s_state;
-static float s_tex0_scale = 1.0f; /* 1 / 2^frac of GX_VA_TEX0 */
+static float s_tex0_scale = 1.0f;
 
-/* emu64 (TARGET_PC paths) reads and writes these to detect palette changes. */
+/* emu64's TARGET_PC paths read and write these to detect palette changes. */
 u16 s_tlut_first_word[16];
-
-/* ---- diagnostics ------------------------------------------------------- */
 
 enum {
     WARN_SWAP_TABLE,
@@ -56,15 +51,13 @@ static void identity34(GxbMtx34* m)
     m->m[0][0] = m->m[1][1] = m->m[2][2] = 1.0f;
 }
 
-static uint64_t s_last_stamp; /* only goes up: a stamp is never reused */
+static uint64_t s_last_stamp;
 
 static void touch(uint64_t* stamp)
 {
     *stamp = ++s_last_stamp;
 }
 
-/* Writes `size` bytes over `dst` and stamps its group if they differ: emu64
- * re-sends some state unchanged. */
 static void update(void* dst, const void* src, size_t size, uint64_t* stamp)
 {
     if (memcmp(dst, src, size) != 0) {
@@ -82,7 +75,6 @@ static void touch_all(GxbState* st)
     touch(&st->stamps.tev);
 }
 
-/* As GXInit leaves it. */
 static void reset_state(void)
 {
     memset(&s_state, 0, sizeof(s_state));
@@ -131,8 +123,6 @@ static GxbState* state(void)
     return &s_state;
 }
 
-/* ---- vertex submission ---------------------------------------------------- */
-
 void GXBegin(GXPrimitive type, GXVtxFmt vtxfmt, u16 nverts)
 {
     (void)vtxfmt;
@@ -159,7 +149,7 @@ void GXPosition2f32(f32 x, f32 y)
     gxr_position(x, y, 0.0f);
 }
 
-/* No fractional scaling, as pc_gx.c: emu64 and J2D send plain coordinates. */
+/* No fractional scaling (as pc_gx.c): emu64 and J2D send plain coordinates. */
 void GXPosition2s16(s16 x, s16 y)
 {
     gxr_position((f32)x, (f32)y, 0.0f);
@@ -232,9 +222,6 @@ void GXSetVtxAttrFmt(GXVtxFmt vtxfmt, GXAttr attr, GXCompCnt cnt, GXCompType typ
 
 void GXInvalidateVtxCache(void) {}
 
-/* ---- transform ------------------------------------------------------------- */
-
-/* How emu64's widescreen markers tag what is drawn now (pc_platform.h). */
 static uint8_t wide_mark(void)
 {
     int mark = g_pc_widescreen_stretch;
@@ -246,7 +233,6 @@ void GXSetProjection(const void* mtx, GXProjectionType type)
     GxbState* st = state();
     float projection[4][4];
     memcpy(projection, mtx, sizeof(float) * 12);
-    /* GX keeps three rows; the fourth follows from the projection type. */
     float row3_persp[4] = { 0.0f, 0.0f, -1.0f, 0.0f };
     float row3_ortho[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     memcpy(projection[3], type == GX_PERSPECTIVE ? row3_persp : row3_ortho, sizeof(row3_persp));
@@ -318,8 +304,7 @@ void GXSetNumTexGens(u8 nTexGens)
     (void)nTexGens;
 }
 
-/* Mapped onto the rotated render target per draw (gx_render.c). The depth
- * range stays [0, 1]: emu64 always passes it. */
+/* The depth range stays [0, 1]: emu64 always passes it. */
 void GXSetViewport(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz)
 {
     (void)nearz;
@@ -352,8 +337,6 @@ void GXSetClipMode(GXClipMode mode)
     (void)mode;
 }
 
-/* ---- lighting --------------------------------------------------------------- */
-
 void GXInitLightPos(GXLightObj* lt_obj, f32 x, f32 y, f32 z)
 {
     GxbLight* l = (GxbLight*)lt_obj;
@@ -362,7 +345,7 @@ void GXInitLightPos(GXLightObj* lt_obj, f32 x, f32 y, f32 z)
     l->pos[2] = z;
 }
 
-/* The shader lights by position (gx.v.pica): directional and spot lights aren't modelled. */
+/* The shader lights by position only (gx.v.pica). */
 void GXInitLightDir(GXLightObj* lt_obj, f32 nx, f32 ny, f32 nz)
 {
     (void)lt_obj;
@@ -373,8 +356,7 @@ void GXInitLightDir(GXLightObj* lt_obj, f32 nx, f32 ny, f32 nz)
 
 void GXInitLightAttn(GXLightObj* lt_obj, f32 a0, f32 a1, f32 a2, f32 k0, f32 k1, f32 k2)
 {
-    /* Not modelled: emu64 only enables attenuation for G_LIGHTING_POSITIONAL,
-     * which no static display list uses. */
+    /* emu64 only attenuates G_LIGHTING_POSITIONAL lights, which no static display list uses. */
     (void)lt_obj;
     (void)a0;
     (void)a1;
@@ -450,9 +432,7 @@ void GXSetChanMatColor(GXChannelID chan, GXColor mat_color)
     update(&st->mat_color, &value, sizeof(value), &st->stamps.lighting);
 }
 
-/* ---- texture environment ---------------------------------------------------------- */
-
-/* For a setter about to write the stage: the TEV group counts as changed. */
+/* Marks the TEV changed: only for a setter about to write the stage. */
 static GxTevStage* tev_stage(GXTevStageID stage)
 {
     if (stage >= GX_TEV_MAX_STAGES) {
@@ -516,8 +496,7 @@ void GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias, GXTevScale 
     }
 }
 
-/* SDK presets. For stages after the first, the rasterised colour inputs are
- * replaced by the previous stage's output, as the SDK does. */
+/* As in the SDK, stages after the first take the previous stage's output instead of the rasterised colour. */
 void GXSetTevOp(GXTevStageID id, GXTevMode mode)
 {
     GxTevStage* s = tev_stage(id);
@@ -544,7 +523,7 @@ void GXSetTevOp(GXTevStageID id, GXTevMode mode)
         c[3] = GXT_CC_TEXC;
         a[3] = GXT_CA_TEXA;
         break;
-    default: /* GX_PASSCLR */
+    default:
         break;
     }
     memcpy(s->color.in, c, sizeof(c));
@@ -559,15 +538,12 @@ void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map, GXCha
     GxTevStage* s = tev_stage(stage);
     if (s != NULL) {
         s->tex_coord = coord == GX_TEXCOORD_NULL ? GX_TEV_NONE : (uint8_t)coord;
-        /* GX_TEX_DISABLE (0x100) or'ed into a map id means "no texture". */
         bool no_map = map == GX_TEXMAP_NULL || ((u32)map & GX_TEX_DISABLE) != 0 || (u32)map >= GXB_MAX_TEXMAPS;
         s->tex_map = no_map ? GX_TEV_NONE : (uint8_t)map;
     }
 }
 
-/* As in pc_gx.c: emu64 fills TEVREG0 from GXColor fields, but passes the
- * prim/env colours (TEVREG1/2) as EmuColor.raw, whose u32 view is 0xRRGGBBAA,
- * so for those the four bytes are reinterpreted rather than read by field. */
+/* As pc_gx.c: emu64 passes the colour registers as EmuColor.raw (0xRRGGBBAA), so bytes are reinterpreted. */
 void GXSetTevColor(GXTevRegID id, GXColor color)
 {
     if ((u32)id >= 4) {
@@ -633,8 +609,6 @@ void GXSetIndTexCoordScale(GXIndTexStageID ind_state, GXIndTexScale scale_s, GXI
     (void)scale_s;
     (void)scale_t;
 }
-
-/* ---- textures -------------------------------------------------------------------- */
 
 static void init_tex_obj(GXTexObj* obj, void* image_ptr, u16 width, u16 height, u8 format, bool is_ci,
                          u32 tlut_name, GXTexWrapMode wrap_s, GXTexWrapMode wrap_t)
@@ -705,7 +679,6 @@ void GXLoadTlut(GXTlutObj* obj, u32 idx)
     }
 }
 
-/* Called by emu64 after loading a palette that is already native-endian. */
 void pc_gx_tlut_set_native_le(unsigned int idx)
 {
     if (idx < GXB_MAX_TLUTS) {
@@ -721,8 +694,6 @@ void GXSetZTexture(GXZTexOp op, GXTexFmt fmt, u32 bias)
     (void)fmt;
     (void)bias;
 }
-
-/* ---- pixel pipeline -------------------------------------------------------------- */
 
 void GXSetBlendMode(GXBlendMode type, GXBlendFactor src_factor, GXBlendFactor dst_factor, GXLogicOp op)
 {
@@ -766,7 +737,6 @@ void GXSetCullMode(GXCullMode mode)
     state()->cull_mode = (uint8_t)mode;
 }
 
-/* Drawn through the PICA's fog table (gx_fog.c, gx_fog_apply.c). */
 void GXSetFog(GXFogType type, f32 startz, f32 endz, f32 nearz, f32 farz, GXColor color)
 {
     GxbState* st = state();
@@ -784,8 +754,6 @@ void GXSetFogRangeAdj(GXBool enable, u16 center, GXFogAdjTable* table)
     (void)center;
     (void)table;
 }
-
-/* ---- state with no PICA200 equivalent ---------------------------------------------- */
 
 void GXSetCoPlanar(GXBool enable) { (void)enable; }
 void GXSetDither(GXBool dither) { (void)dither; }

@@ -1,17 +1,15 @@
-/* gx_gpu_check.c - the draw-by-draw GPU check (see gx_gpu_check.h). */
 #include "gx_gpu_check.h"
 
 #include <3ds.h>
 #include <citro3d.h>
 #include <stdio.h>
 
-/* citro3d 1.7.1's context (source/internal.h, C3D_Context) starts with the GX
- * command queue that C3D_FrameBegin waits on. */
+/* citro3d 1.7.1's private C3D_Context starts with its GX queue: recheck after a citro3d upgrade. */
 extern unsigned char __C3D_Context[];
 
 #define GPU_CHECK_TIMEOUT_NS 2000000000LL /* any draw takes far less */
 
-static uint32_t s_frames; /* drawing frames still to check */
+static uint32_t s_frames;
 
 static gxCmdQueue_s* c3d_queue(void)
 {
@@ -65,8 +63,7 @@ bool gxg_frame_end(uint32_t draws)
     return finished;
 }
 
-/* Read through GSP: the GPU's internal registers are at 0x401000 in its
- * register space, 4 bytes each. */
+/* PICA internal registers sit at 0x401000 in GSP's register space, 4 bytes each. */
 void gxg_log_gpu_state(const char* when)
 {
     static const struct {

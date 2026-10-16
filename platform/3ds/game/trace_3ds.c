@@ -1,5 +1,3 @@
-/* trace_3ds.c - where the game thread is (see trace_3ds.h). The watchdog reads
- * the marks without a lock: a torn read only shows the previous step's name. */
 #include <3ds.h>
 #include <stdio.h>
 
@@ -13,17 +11,18 @@
 #define WATCH_PERIOD_NS 500000000LL
 #define STALL_MS        4000u
 #define REPEAT_MS       15000u
-#define LOGGED_FRAMES   3  /* the first frames log every step */
-#define STATS_FRAMES    40 /* and what they hold */
+#define LOGGED_FRAMES   3
+#define STATS_FRAMES    40
 
+/* The watchdog reads the marks without a lock: a torn read only shows the previous step's name. */
 static volatile const char* s_stage = "boot";
 static volatile uint32_t s_seq;
 static volatile uint32_t s_frame;
 static volatile bool s_stop;
-static bool s_detailed; /* set once, before the game's frames */
+static bool s_detailed;
 static volatile uint32_t s_disc_reads;
 static volatile uint64_t s_disc_bytes;
-static uint64_t s_disc_bytes_reported; /* the watchdog's own */
+static uint64_t s_disc_bytes_reported;
 static Thread s_thread;
 
 void trace3ds_mark(const char* stage)
@@ -68,7 +67,7 @@ static void report_disc(void)
     fprintf(stderr, "[watchdog]   disc image: %lu reads, %.1f MB in all, %.2f MB since the last report\n",
             (unsigned long)s_disc_reads, bytes / (1024.0 * 1024.0),
             (bytes - s_disc_bytes_reported) / (1024.0 * 1024.0));
-    /* During a HOME: active means stuck before the jump, inactive waiting for the HOME Menu. */
+    /* In a HOME hang: active is stuck before the jump, inactive is waiting for the HOME Menu. */
     fprintf(stderr, "[watchdog]   APT: the game is %s\n", aptIsActive() ? "active" : "inactive (handed over)");
     s_disc_bytes_reported = bytes;
 }

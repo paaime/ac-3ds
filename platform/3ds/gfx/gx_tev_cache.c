@@ -1,4 +1,3 @@
-/* gx_tev_cache.c - see gx_tev_cache.h. */
 #include "gx_tev_cache.h"
 
 #include <stddef.h>
@@ -26,7 +25,6 @@ static size_t used_stages(int stage_count)
     return stage_count > GX_TEV_MAX_STAGES ? GX_TEV_MAX_STAGES : (size_t)stage_count;
 }
 
-/* The setup with its unused stages zeroed: equal keys translate alike. */
 static void make_key(const GxTevConfig* gx, GxTevConfig* key)
 {
     memset(key, 0, sizeof(*key));

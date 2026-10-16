@@ -1,4 +1,3 @@
-/* Host tests for gx_screen.c. */
 #include "gx_screen.h"
 
 #include <stdio.h>
@@ -14,8 +13,6 @@ static int failures = 0;
         }                                                                   \
     } while (0)
 
-/* The top screen, 400 x 240 landscape; whole, or with the GameCube's 4:3
- * picture in its middle (320 x 240, 40 px bars). */
 #define TOP    gx_screen_target(640.0f, 480.0f, 400, 240, false)
 #define PILLAR gx_screen_target(640.0f, 480.0f, 400, 240, true)
 
@@ -29,8 +26,7 @@ static void test_full_screen_is_the_whole_target(void)
 
 static void test_left_half_of_the_screen(void)
 {
-    /* The screen's left edge is the framebuffer's last row in viewport terms
-     * (y = 400), its top edge the last column (x = 240). */
+    /* Portrait framebuffer: the screen's left edge is viewport y = 400, its top edge x = 240. */
     GxScreenRect r = { 0, 0, 320, 480 };
     PicaRect p = gx_screen_to_pica(r, TOP);
     CHECK(p.x == 0 && p.w == 240);
@@ -51,14 +47,13 @@ static void test_clamps_to_the_target(void)
     GxScreenRect r = { -100, -50, 1000, 1000 };
     PicaRect p = gx_screen_to_pica(r, TOP);
     CHECK(p.x == 0 && p.y == 0 && p.w == 240 && p.h == 400);
-    GxScreenRect off = { 700, 0, 50, 50 }; /* entirely off screen */
+    GxScreenRect off = { 700, 0, 50, 50 };
     PicaRect q = gx_screen_to_pica(off, TOP);
     CHECK(q.w == 0 || q.h == 0);
 }
 
 static void test_inner_rectangle(void)
 {
-    /* x 160..480 of 640 -> viewport y 100..300; y 120..360 of 480 -> viewport x 60..180 */
     GxScreenRect r = { 160, 120, 320, 240 };
     PicaRect p = gx_screen_to_pica(r, TOP);
     CHECK(p.x == 60 && p.w == 120);
@@ -76,7 +71,6 @@ static void test_full_viewport_folds_to_identity(void)
 
 static void test_left_half_viewport_folds_into_the_left_half(void)
 {
-    /* NDC x = 1 (the viewport's right edge) lands at the screen's centre. */
     GxViewportFold f = gx_screen_viewport_fold((GxScreenRect){ 0, 0, 320, 480 }, TOP);
     CHECK(NEAR_EQ(f.scale_x * 1.0f + f.offset_x, 0.0f));
     CHECK(NEAR_EQ(f.scale_x * -1.0f + f.offset_x, -1.0f));
@@ -85,28 +79,26 @@ static void test_left_half_viewport_folds_into_the_left_half(void)
 
 static void test_partly_off_screen_viewport_keeps_its_scale(void)
 {
-    /* A 640-wide viewport starting at x = -320 shows its right half at full
-     * scale (cropped, not squashed into the visible part). */
     GxViewportFold f = gx_screen_viewport_fold((GxScreenRect){ -320, 0, 640, 480 }, TOP);
     CHECK(NEAR_EQ(f.scale_x, 1.0f));
-    CHECK(NEAR_EQ(f.scale_x * 0.0f + f.offset_x, -1.0f)); /* its centre is the screen's left edge */
+    CHECK(NEAR_EQ(f.scale_x * 0.0f + f.offset_x, -1.0f));
 }
 
 static void test_top_half_viewport_moves_up(void)
 {
     GxViewportFold f = gx_screen_viewport_fold((GxScreenRect){ 0, 0, 640, 240 }, TOP);
     CHECK(NEAR_EQ(f.scale_y, 0.5f));
-    CHECK(NEAR_EQ(f.scale_y * -1.0f + f.offset_y, 0.0f)); /* its bottom edge is mid-screen (NDC y up) */
+    CHECK(NEAR_EQ(f.scale_y * -1.0f + f.offset_y, 0.0f));
 }
 
 static void test_target_shapes(void)
 {
     GxScreenTarget t = TOP;
-    CHECK(t.fb_width == 240 && t.fb_height == 400); /* portrait */
+    CHECK(t.fb_width == 240 && t.fb_height == 400);
     CHECK(t.image_x == 0 && t.image_y == 0 && t.image_w == 400 && t.image_h == 240);
     GxScreenTarget p = PILLAR;
     CHECK(p.image_x == 40 && p.image_y == 0 && p.image_w == 320 && p.image_h == 240);
-    GxScreenTarget b = gx_screen_target(640.0f, 480.0f, 320, 240, true); /* already 4:3: no bars */
+    GxScreenTarget b = gx_screen_target(640.0f, 480.0f, 320, 240, true);
     CHECK(b.image_x == 0 && b.image_w == 320 && b.image_h == 240);
 }
 
@@ -115,8 +107,8 @@ static void test_pillarbox_maps_the_frame_to_the_middle(void)
     GxScreenRect r = { 0, 0, 640, 480 };
     PicaRect p = gx_screen_to_pica(r, PILLAR);
     CHECK(p.x == 0 && p.w == 240 && p.y == 40 && p.h == 320);
-    CHECK(!gx_screen_is_full(r, PILLAR)); /* the bars stay out: the scissor stays on */
-    GxScreenRect left = { 0, 0, 320, 480 }; /* landscape x 40..200 */
+    CHECK(!gx_screen_is_full(r, PILLAR));
+    GxScreenRect left = { 0, 0, 320, 480 };
     PicaRect q = gx_screen_to_pica(left, PILLAR);
     CHECK(q.y == 200 && q.h == 160);
     GxScreenRect big = { -100, -50, 1000, 1000 };
@@ -130,8 +122,8 @@ static void test_pillarbox_folds_into_the_middle(void)
     CHECK(NEAR_EQ(f.scale_x, 0.8f) && NEAR_EQ(f.offset_x, 0.0f));
     CHECK(NEAR_EQ(f.scale_y, 1.0f) && NEAR_EQ(f.offset_y, 0.0f));
     GxViewportFold h = gx_screen_viewport_fold((GxScreenRect){ 0, 0, 320, 480 }, PILLAR);
-    CHECK(NEAR_EQ(h.scale_x * 1.0f + h.offset_x, 0.0f));   /* the viewport's right edge: mid-screen */
-    CHECK(NEAR_EQ(h.scale_x * -1.0f + h.offset_x, -0.8f)); /* its left edge: the bar's edge */
+    CHECK(NEAR_EQ(h.scale_x * 1.0f + h.offset_x, 0.0f));
+    CHECK(NEAR_EQ(h.scale_x * -1.0f + h.offset_x, -0.8f));
 }
 
 static void test_intersection(void)
@@ -146,9 +138,7 @@ static void test_intersection(void)
 
 #define NEAR(a, b) ((a) - (b) < 0.001f && (b) - (a) < 0.001f)
 
-/* The top screen is 5:3 and the GameCube's picture 4:3: drawn at its own
- * proportions, a 4:3 picture takes 0.8 of the width. A target no wider than
- * the picture needs no correction. */
+/* The top screen is 5:3: a 4:3 picture takes 0.8 of its width. */
 static void test_wide_factor(void)
 {
     CHECK(NEAR(gx_screen_wide_factor(TOP), 0.8f));
@@ -157,9 +147,6 @@ static void test_wide_factor(void)
     CHECK(NEAR(gx_screen_wide_factor(gx_screen_target(640.0f, 480.0f, 320, 240, false)), 1.0f));
 }
 
-/* As the PC port: the world (untagged draws) is seen wider, perspective or
- * not; menus keep their proportions, so their 2D is narrowed too; full-screen
- * transitions and pictures stay stretched over the whole screen. */
 static void test_projection_widen(void)
 {
     CHECK(NEAR(gx_screen_projection_widen(GX_WIDE_MORE_VIEW, false, 0.8f), 0.8f));
@@ -171,9 +158,7 @@ static void test_projection_widen(void)
     CHECK(NEAR(gx_screen_projection_widen(GX_WIDE_MORE_VIEW, false, 1.0f), 1.0f));
 }
 
-/* A menu's viewport other than the whole screen goes where the narrowed menu
- * puts it: into the 4:3 middle (64 EFB pixels in, at 0.8), as wide as before
- * times 0.8. The whole screen, and an unwidened target, stay as they are. */
+/* A menu's viewport goes into the 4:3 middle: 64 EFB pixels in, x and width times 0.8. */
 static void test_ui_viewport(void)
 {
     GxScreenRect full = { 0, 0, 640, 480 };
@@ -185,11 +170,10 @@ static void test_ui_viewport(void)
     CHECK(r.top == 50 && r.height == 32);
     GxScreenRect same = gx_screen_ui_viewport(icon, 1.0f, 640.0f, 480.0f);
     CHECK(same.left == 100 && same.width == 64);
-    GxScreenRect almost = { 0.5f, 0.5f, 639.6f, 479.6f }; /* the whole screen, give or take rounding */
+    GxScreenRect almost = { 0.5f, 0.5f, 639.6f, 479.6f };
     CHECK(gx_screen_ui_viewport(almost, 0.8f, 640.0f, 480.0f).width == almost.width);
 }
 
-/* A fold leaves the projection's own x scale as it is; the renderer widens it. */
 static void test_fold_starts_unwidened(void)
 {
     GxScreenRect v = { 0, 0, 640, 480 };

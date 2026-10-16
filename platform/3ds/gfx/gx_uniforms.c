@@ -1,6 +1,3 @@
-/* gx_uniforms.c - the vertex shader's uniforms (see gx_uniforms.h). A register
- * is sent only when its value changes; a group is rebuilt only when its change
- * stamp or the renderer's input to it changes. */
 #include "gx_uniforms.h"
 
 #include <citro3d.h>
@@ -14,12 +11,11 @@ static struct {
     int projection, model_view, normal, texmtx[GXU_TEXGENS], tex_src_nrm;
     int mat_color, amb_color, mat_select, lit_select;
     int light_pos, light_color;
-} L; /* registers */
+} L;
 
 static struct {
     float unif[FV_UNIFORMS][4];
     bool unif_valid[FV_UNIFORMS];
-    /* what each group was last built from; stamp 0: nothing */
     uint64_t projection_stamp, matrices_stamp, texgen_stamp, lighting_stamp;
     GxViewportFold fold;
     GxUvAffine uv[GXU_TEXGENS];
@@ -59,8 +55,6 @@ void gxu_invalidate(void)
     forget_groups();
 }
 
-/* ---- registers ---------------------------------------------------------------- */
-
 static void set_vec(int loc, float x, float y, float z, float w)
 {
     if (loc < 0 || loc >= FV_UNIFORMS) {
@@ -89,7 +83,6 @@ static void set_color(int loc, uint32_t rgba)
             (float)((rgba >> 8) & 0xFF) * COLOR_SCALE, (float)(rgba & 0xFF) * COLOR_SCALE);
 }
 
-/* A stamp of 0 (unknown) never matches. */
 static bool same_stamp(uint64_t* last, uint64_t stamp)
 {
     if (stamp != 0 && stamp == *last) {
@@ -117,11 +110,7 @@ static bool same_uv(const GxUvAffine* a, const GxUvAffine* b)
     return true;
 }
 
-/* ---- groups ------------------------------------------------------------------- */
-
-/* The GX viewport is folded into clip space (gx_screen.h), then clip space
- * turns a quarter-turn for the rotated screens, like citro3d's Mtx_PerspTilt
- * (x' = y, y' = -x). GX and PICA share the [-1, 0] depth range. */
+/* Quarter-turn for the portrait screens, as Mtx_PerspTilt (x' = y, y' = -x); GX and PICA share depth [-1, 0]. */
 static void upload_projection(const GxbState* st, GxViewportFold fold)
 {
     bool fold_kept = same_fold(U.fold, fold);
@@ -131,7 +120,7 @@ static void upload_projection(const GxbState* st, GxViewportFold fold)
     U.fold = fold;
     float r0[4], r1[4];
     for (int i = 0; i < 4; i++) {
-        float widen = i == 0 ? fold.widen_x : 1.0f; /* the x scale only, as the PC port */
+        float widen = i == 0 ? fold.widen_x : 1.0f;
         float x = fold.scale_x * st->projection[0][i] * widen + fold.offset_x * st->projection[3][i];
         float y = fold.scale_y * st->projection[1][i] + fold.offset_y * st->projection[3][i];
         r0[i] = y;
@@ -160,9 +149,7 @@ static void upload_matrices(const GxbState* st)
     set_row(L.model_view + 3, LAST_ROW);
 }
 
-/* PICA unit n samples texcoord n, from GX texgen n. emu64's GX_TG_NRM matrix
- * has last row (0, 0, 0, 1), so two rows suffice, as in the PC port. uv[n]
- * (gx_uv.h) applies after the GX texture matrix. */
+/* Two rows suffice: emu64's GX_TG_NRM matrix has last row (0, 0, 0, 1). */
 static void upload_texgen(const GxbState* st, const GxUvAffine uv[GXU_TEXGENS])
 {
     bool uv_kept = true;
@@ -242,6 +229,6 @@ void gxu_upload_blit(void)
     set_row(L.texmtx[0] + 0, IDENTITY[0]);
     set_row(L.texmtx[0] + 1, IDENTITY[1]);
     set_vec(L.tex_src_nrm, 0, 0, 0, 0);
-    set_vec(L.mat_select, 1, 1, 1, 1); /* the vertex colour (white), unlit */
+    set_vec(L.mat_select, 1, 1, 1, 1);
     set_vec(L.lit_select, 0, 0, 0, 0);
 }

@@ -16,16 +16,9 @@ void gx_uv_apply(GxUvAffine a, const float row0[4], const float row1[4], float o
     out1[3] += a.m[1][2];
 }
 
-/* The top screen's framebuffer is portrait (clip space turns a quarter-turn,
- * x' = y, y' = -x): its row 0 is the screen's left edge, column 0 its bottom.
- * Framebuffer row r sits at t = 1 - r / tex_height (PICA samples the first
- * stored row at t = 1). The game's (s, t) over the copy is the screen
- * point (x, y) = (src_left + s * src_width, src_top + t * src_height):
- *   texture s = (fb_width / tex_width) * (1 - y)
- *   texture t = 1 - (fb_height / tex_height) * x */
+/* Portrait framebuffer: row 0 is the screen's left edge, and PICA samples the first stored row at t = 1. */
 GxUvAffine gx_uv_rotated_copy(GxUvCopyLayout l)
 {
-    /* the copied part of the EFB, as fractions of the screen */
     float src_left = l.image_left + l.src_left * l.image_width;
     float src_width = l.src_width * l.image_width;
     float src_top = l.image_top + l.src_top * l.image_height;

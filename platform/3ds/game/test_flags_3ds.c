@@ -1,4 +1,3 @@
-/* test_flags_3ds.c - opt-in testing options (see test_flags_3ds.h). */
 #include "pc_platform.h"
 
 #include <stdio.h>
@@ -17,10 +16,9 @@
 #define NES_MAX_ROM     64
 #define BGM_SCENE_EMU   0x11 /* as ac_my_room_msg_ctrl.c_inc does before goto_emu_game */
 
-static int s_nes_rom;       /* 0: nes_test not set */
+static int s_nes_rom;
 static bool s_nes_request;
 
-/* NES_DEFAULT_ROM if the file holds no number; 0 if there is no file. */
 static int read_nes_rom(void)
 {
     FILE* f = fopen(NES_TEST_FLAG, "r");
@@ -48,7 +46,6 @@ void test_flags_pad(bool select_held, bool start_pressed)
     }
 }
 
-/* Only from the play scene (town, houses), as the NES furniture does. */
 void test_flags_frame(void)
 {
     if (!s_nes_request) {

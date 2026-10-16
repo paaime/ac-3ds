@@ -1,4 +1,3 @@
-/* Host tests for text_wrap.c. */
 #include <stdio.h>
 #include <string.h>
 
@@ -53,11 +52,11 @@ static void test_a_word_longer_than_a_line_is_cut(void)
 
 static void test_limits(void)
 {
-    CHECK(text_wrap("a b c d e f", 1, lines, 3) == 3); /* stops at max_lines */
+    CHECK(text_wrap("a b c d e f", 1, lines, 3) == 3);
     CHECK(text_wrap("", 39, lines, TEXT_WRAP_MAX_LINES) == 0);
     CHECK(text_wrap(NULL, 39, lines, TEXT_WRAP_MAX_LINES) == 0);
     CHECK(text_wrap("abc", 0, lines, TEXT_WRAP_MAX_LINES) == 0);
-    CHECK(text_wrap("abc", TEXT_WRAP_MAX_WIDTH + 5, lines, TEXT_WRAP_MAX_LINES) == 1); /* clamped */
+    CHECK(text_wrap("abc", TEXT_WRAP_MAX_WIDTH + 5, lines, TEXT_WRAP_MAX_LINES) == 1);
 }
 
 static void test_centring(void)

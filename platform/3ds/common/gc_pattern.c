@@ -5,12 +5,12 @@
 #define RGB5A3_OPAQUE   0x8000u
 #define BYTES_PER_TEXEL 2u
 #define TEXELS_PER_BLOCK (GC_PATTERN_BLOCK * GC_PATTERN_BLOCK)
-#define ALPHA3_MAX      7    /* RGB5A3's translucent texels: 3-bit alpha, 4-bit colour */
-#define DISC_EDGE       1.5f /* texels over which the disc fades out */
-#define ARROW_TIP       0.25f  /* the tip and the base, as fractions of the height */
+#define ALPHA3_MAX      7 /* RGB5A3's translucent texels: 3-bit alpha, 4-bit colour */
+#define DISC_EDGE       1.5f
+#define ARROW_TIP       0.25f
 #define ARROW_BASE      0.75f
-#define ARROW_HALF_W    0.375f /* half the base, as a fraction of the width */
-#define ARROW_EDGE      1.0f   /* texels over which the arrow fades out */
+#define ARROW_HALF_W    0.375f
+#define ARROW_EDGE      1.0f
 
 uint16_t gc_rgb5a3_opaque(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -22,7 +22,6 @@ size_t gc_rgb5a3_size(uint32_t width, uint32_t height)
     return (size_t)width * height * BYTES_PER_TEXEL;
 }
 
-/* Byte offset of texel (x, y): blocks left to right, then down. */
 static size_t texel_offset(uint32_t width, uint32_t x, uint32_t y)
 {
     uint32_t block = (y / GC_PATTERN_BLOCK) * (width / GC_PATTERN_BLOCK) + x / GC_PATTERN_BLOCK;
@@ -42,7 +41,6 @@ static void put(uint8_t* out, uint32_t width, uint32_t x, uint32_t y, uint16_t c
     p[1] = (uint8_t)(c & 0xFF);
 }
 
-/* RGB5A3 for a colour with `coverage` (0..1) of alpha. */
 static uint16_t with_alpha(uint8_t r, uint8_t g, uint8_t b, float coverage)
 {
     int a = (int)(coverage * ALPHA3_MAX + 0.5f);

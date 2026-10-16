@@ -21,7 +21,7 @@
 typedef struct {
     const char* key;
     const char* label;
-    const char* choices[CHOICES_MAX]; /* page texts, NULL after the last; lower case in the file */
+    const char* choices[CHOICES_MAX]; /* NULL after the last; lower case in the file */
     const char* note;
     SettingsPage page;
     uint8_t default_value;
@@ -112,14 +112,11 @@ Settings settings_toggle(Settings s, SettingId id)
     return count == 0 ? s : settings_set_value(s, id, (settings_value(s, id) + 1) % count);
 }
 
-/* ---- the file ------------------------------------------------------------- */
-
 static char lower(char c)
 {
     return (c >= 'A' && c <= 'Z') ? (char)(c - 'A' + 'a') : c;
 }
 
-/* a[0..a_len) equals the word b, ignoring case. */
 static bool same_word(const char* a, size_t a_len, const char* b)
 {
     if (strlen(b) != a_len) {
@@ -138,7 +135,6 @@ static bool is_space(char c)
     return c == ' ' || c == '\t' || c == '\r';
 }
 
-/* [*start, *end) without surrounding blanks. */
 static void trim(const char** start, const char** end)
 {
     while (*start < *end && is_space(**start)) {
@@ -172,7 +168,7 @@ static Settings apply_line(Settings s, const char* line, const char* end)
                 return settings_set_value(s, (SettingId)id, v);
             }
         }
-        if (len == 1 && *value >= '0' && *value < '0' + count) { /* 0 / 1 for a switch, a choice's index */
+        if (len == 1 && *value >= '0' && *value < '0' + count) {
             return settings_set_value(s, (SettingId)id, *value - '0');
         }
         return s;
@@ -228,8 +224,6 @@ size_t settings_format(Settings s, char* out, size_t size)
     }
     return used;
 }
-
-/* ---- the page ------------------------------------------------------------- */
 
 const char* settings_label(SettingId id)
 {

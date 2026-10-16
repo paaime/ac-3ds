@@ -1,5 +1,3 @@
-/* nes_video_3ds.c - the NES picture (see nes_video_3ds.h), tiled each frame into
- * a 256x256 texture (rows flipped, t = 0 at the top) and blitted. */
 #include <3ds.h>
 #include <citro3d.h>
 #include <stdio.h>
@@ -11,14 +9,14 @@
 
 #define NES_WIDTH       256
 #define NES_LINES       240
-#define CROP_TOP        8   /* as pc_nes_fixnes.c: the top and bottom 8 lines are overscan */
+#define CROP_TOP        8 /* as pc_nes_fixnes.c: the top and bottom 8 lines are overscan */
 #define SHOWN_LINES     224
 #define TEX_SIZE        256
 #define TEXEL_BYTES     2
 #define SCREEN_WIDTH    400
 #define SCREEN_HEIGHT   240
 #define TILE            8
-/* With the row flip, the shown lines fill the texture's last rows. */
+/* pica_tile flips the rows (t = 0 at the top): the shown lines fill the texture's last rows. */
 #define SHOWN_OFFSET_BYTES ((size_t)(TEX_SIZE - SHOWN_LINES) * TEX_SIZE * TEXEL_BYTES)
 
 static C3D_Tex s_tex;

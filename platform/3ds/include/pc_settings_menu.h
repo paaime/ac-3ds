@@ -1,5 +1,4 @@
-/* pc_settings_menu.h — 3DS version of pc/include/pc_settings_menu.h without SDL
- * types. Stubs report "nothing to do", so the menu closes as soon as it opens. */
+/* 3DS version of pc/include/pc_settings_menu.h: stubs, so the menu closes as soon as it opens. */
 #ifndef PC_SETTINGS_MENU_H
 #define PC_SETTINGS_MENU_H
 

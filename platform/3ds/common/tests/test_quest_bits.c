@@ -1,4 +1,3 @@
-/* Host tests for quest_bits.c. */
 #include "quest_bits.h"
 
 #include <stdio.h>
@@ -15,8 +14,6 @@ static int failures = 0;
         }                                                                   \
     } while (0)
 
-/* A contest quest (type 2), kind 21, time limit on, progress 9, reward set,
- * due at 45:30 past the hour (the time limit's sec, min follow the bits). */
 static const uint8_t GC_BYTES[4] = { 0x95, 0xCC, 0x1E, 0x2D };
 
 /* The same fields as ARM GCC packs them: LSB first in a little-endian 16-bit unit. */
@@ -40,10 +37,10 @@ static void test_native_to_gc(void)
 
 static void test_time_limit_bytes_are_left_alone(void)
 {
-    uint8_t b[4] = { 0xFF, 0xFF, 0x3B, 0x3B }; /* 59 s, 59 min */
+    uint8_t b[4] = { 0xFF, 0xFF, 0x3B, 0x3B };
     quest_bits_repack(b, true);
     CHECK(b[2] == 0x3B && b[3] == 0x3B);
-    CHECK(b[0] == 0xFF && b[1] == 0xFF); /* every bit set stays set */
+    CHECK(b[0] == 0xFF && b[1] == 0xFF);
 }
 
 static void test_round_trip_every_value(void)

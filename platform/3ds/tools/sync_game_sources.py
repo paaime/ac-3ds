@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""Copy the PC port's game-source selection into platform/3ds/cmake/game_sources.cmake.
-
-The 3DS build compiles exactly the decomp files the PC port compiles. That
-selection (a glob of src/, its exclusion rules and the C++ language
-overrides) lives in pc/CMakeLists.txt; this script copies those two blocks
-verbatim, so they can be re-synced when upstream changes them.
-
-Usage: python3 platform/3ds/tools/sync_game_sources.py   (from the repo root)
-"""
+"""Usage: python3 platform/3ds/tools/sync_game_sources.py (from the repo root)"""
 import pathlib
 import re
 import subprocess
@@ -33,7 +25,7 @@ def find_block(lines, start_pat, end_pat):
     if end is None:
         sys.exit(f"pattern not found in {PC_CMAKE}: {end_pat}")
     while end > start and (SECTION_RULE.match(lines[end - 1]) or not lines[end - 1].strip()):
-        end -= 1  # drop the next section's "# ====" banner and blank lines
+        end -= 1
     return start, end
 
 

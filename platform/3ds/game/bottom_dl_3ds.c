@@ -1,6 +1,3 @@
-/* bottom_dl_3ds.c - the bottom screen's own display list (see bottom_dl_3ds.h):
- * the polygon arena is swapped for a private buffer while the list is built,
- * after the frame's own emu64 pass, so nothing else is using either. */
 #include "pc_platform.h"
 
 #include <stdio.h>
@@ -17,7 +14,7 @@
 #include "bottom_dl_3ds.h"
 #include "gx_render.h"
 
-#define DL_GFX      0x4000 /* 128 KB: the map and its bar use a few thousand commands */
+#define DL_GFX      0x4000
 #define EFB_RIGHT   640
 #define EFB_BOTTOM  480
 #define UCODE_COUNT 2
@@ -27,8 +24,7 @@
 static Gfx s_dl[DL_GFX];
 static bool s_warned_overflow;
 
-/* Menus inherit the viewport from the frame's earlier lists; this list has none.
- * In the arena, as mSM_setup_view does, so seg2k0 can't take a heap address. */
+/* In the arena, as mSM_setup_view does, so seg2k0 can't take a heap address. */
 static Vp* screen_viewport(GRAPH* graph)
 {
     Vp* vp = GRAPH_ALLOC_TYPE(graph, Vp, 1);
@@ -39,7 +35,6 @@ static Vp* screen_viewport(GRAPH* graph)
     return vp;
 }
 
-/* As DisplayList_initialize, plus the viewport and the font in polygon mode. */
 static void open_list(GRAPH* graph)
 {
     Vp* viewport = screen_viewport(graph);
@@ -60,7 +55,6 @@ static void close_list(GRAPH* graph)
     CLOSE_DISP(graph);
 }
 
-/* As graph_task_set00 runs a frame's lists. */
 static void run_emu64(Gfx* list)
 {
     ucode_info ucode[UCODE_COUNT];

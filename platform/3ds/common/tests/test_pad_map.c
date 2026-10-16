@@ -1,4 +1,3 @@
-/* Host tests for pad_map.c. */
 #include "pad_map.h"
 
 #include <stdio.h>
@@ -79,7 +78,7 @@ static void test_sticks_at_rest_read_centred(void)
     GcPadState s = circle(0, 0);
     CHECK(s.stick_x == 0 && s.stick_y == 0 && s.substick_x == 0 && s.substick_y == 0);
 
-    s = circle(12, -12); /* a pad resting off-centre, down and right (issue #1) */
+    s = circle(12, -12);
     CHECK(s.stick_x == 0 && s.stick_y == 0);
     s = circle(PAD_MAP_STICK_DEAD_ZONE, 0);
     CHECK(s.stick_x == 0 && s.stick_y == 0);
@@ -104,9 +103,9 @@ static void test_sticks_reach_full_tilt(void)
     s = circle(0, -PAD_MAP_STICK_RANGE);
     CHECK(s.stick_x == 0 && s.stick_y == -127);
 
-    s = circle(400, 0); /* beyond the range: full tilt */
+    s = circle(400, 0);
     CHECK(s.stick_x == 127 && s.stick_y == 0);
-    s = circle(400, -400); /* the direction kept: 127 / sqrt(2) = 89.8 */
+    s = circle(400, -400); /* 127 / sqrt(2) = 89.8 */
     CHECK(s.stick_x == 90 && s.stick_y == -90);
 }
 

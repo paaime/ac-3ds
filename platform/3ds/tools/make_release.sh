@@ -1,8 +1,5 @@
 #!/bin/sh
-# make_release.sh [--source-url URL] [--allow-dirty]: build/release/ac3ds-<version>.zip, the player build
-# (.3dsx, .cia) with README.txt and the licences, built in build/3ds-release. Needs devkitPro (DEVKITPRO) and
-# makerom/bannertool (MAKEROM/BANNERTOOL, PATH or ref/bin/ctrtools), and qrencode (QRENCODE or PATH) for the
-# FBI QR code: platform/3ds/README.md, "Release build".
+# Usage: make_release.sh [--source-url URL] [--allow-dirty] (platform/3ds/README.md, "Release build").
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
@@ -38,7 +35,6 @@ VERSION=$(sed -n 's/^project(ac3ds VERSION \([0-9]*\.[0-9]*\.[0-9]*\) .*/\1/p' "
 [ -n "$VERSION" ] || fail "no version in platform/3ds/CMakeLists.txt's project()"
 MAJOR=${VERSION%%.*}; REST=${VERSION#*.}; MINOR=${REST%%.*}; MICRO=${REST#*.}
 
-# What goes into the build must be committed, so the source address points to it.
 COMMIT=$(git -C "$ROOT" rev-parse --short HEAD)
 DIRTY=$(git -C "$ROOT" status --porcelain -- platform/3ds src include pc)
 NAME=ac3ds-$VERSION
@@ -62,7 +58,7 @@ cp "$BUILD/ac3ds.3dsx" "$STAGE/"
 set -- -f cia -o "$STAGE/ac3ds.cia" -rsf "$RES/ac3ds.rsf" -target t -elf "$BUILD/ac3ds.elf" \
     -icon "$BUILD/ac3ds.smdh" -major "$MAJOR" -minor "$MINOR" -micro "$MICRO"
 if [ -n "$BANNERTOOL" ]; then
-    # The banner has no tune: bannertool wants one, so a tenth of a second of silence.
+    # bannertool needs a sound for the banner: a tenth of a second of silence.
     python3 -c 'import sys, wave; w = wave.open(sys.argv[1], "wb"); w.setnchannels(1); w.setsampwidth(2); \
 w.setframerate(32000); w.writeframes(bytes(6400)); w.close()' "$BUILD/silence.wav"
     "$BANNERTOOL" makebanner -i "$RES/banner.png" -a "$BUILD/silence.wav" -o "$BUILD/banner.bnr" >/dev/null
@@ -102,7 +98,6 @@ else
     echo "make_release: qrencode not found (QRENCODE or PATH): no FBI QR code" >&2
 fi
 
-# The release notes: res/release-notes.md, with the FBI section only when there is a QR code.
 NOTES=$OUT/$NAME-notes.md
 if [ -n "$QR_URL" ]; then
     sed -e '/^@FBI@$/d' -e '/^@END_FBI@$/d' -e "s|@QR_URL@|$QR_URL|" -e "s|@VERSION@|$VERSION|g" \

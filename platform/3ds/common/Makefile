@@ -1,16 +1,9 @@
-# Host tests for the port's pure modules: no libctru, so the host C compiler and no devkitARM.
-#
-#   make test       build and run every test
-#   make coverage   run the tests with clang source-based coverage and print a report
-#   make clean
-
 HOSTCC        ?= cc
 HOST_CFLAGS   := -std=c11 -Wall -Wextra -Werror -O2 -I.
 BUILD         := build/host
 MODULES       := pica_tile gc_texture pot_pad gc_clock mem_layout pad_map audio_pacer wave_pool pcm_level gc_ortho dsp_firmware quest_bits prof_window pcm_stereo nes_pixels feed_rate settings_file gc_pattern bottom_layout light_timer stall_watch tex_memo debounce press_hold tga acre_sync acre_select quick_save text_wrap disc_check
 
-# Coverage uses clang's source-based coverage (gcc doesn't support these flags).
-# macOS ships the llvm tools behind xcrun; elsewhere they're on PATH.
+# clang only: gcc lacks source-based coverage. macOS keeps the llvm tools behind xcrun.
 COV_CC        ?= clang
 ifeq ($(shell uname -s),Darwin)
 LLVM_PROFDATA ?= xcrun llvm-profdata

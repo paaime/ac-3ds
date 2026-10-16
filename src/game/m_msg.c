@@ -133,10 +133,6 @@ extern void mMsg_Draw(GAME* game) {
 }
 
 #ifdef TARGET_3DS
-/* The 3DS bottom screen's Options title (platform/3ds/game/bottom_ui_3ds.c):
- * the dialogue's name plate on its own, tinted as a
- * villager's, under the modelview the caller has set. Its model and texture
- * are static in m_msg_data.c_inc. */
 extern void mMsg_3ds_draw_nameplate(GRAPH* graph, u8 r, u8 g, u8 b) {
     OPEN_DISP(graph);
     gSPDisplayList(NOW_POLY_OPA_DISP++, mMsg_init_disp);

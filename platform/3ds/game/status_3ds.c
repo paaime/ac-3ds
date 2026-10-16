@@ -1,4 +1,3 @@
-/* status_3ds.c - the bottom screen's console (see status_3ds.h). */
 #include "status_3ds.h"
 
 #include <3ds.h>
@@ -19,7 +18,7 @@
 #define W                 CONSOLE_ROW_WIDTH_BOTTOM
 #define MB                (1024.0 * 1024.0)
 #define KB                1024u
-#define REFRESH_FRAMES    20 /* 3 refreshes per second at 60 fps */
+#define REFRESH_FRAMES    20
 #define FIRST_LIVE_ROW    14
 #define MAX_BOOT_ROWS     12
 #define HINT_ROW          29
@@ -27,7 +26,7 @@
 #define GAME_TITLE        "Animal Crossing"
 #define TITLE_ROW         12
 #define MESSAGE_ROW       4
-#define MESSAGE_MARGIN    2  /* columns */
+#define MESSAGE_MARGIN    2
 #define MESSAGE_LINES     18
 #define ACTION_ROW        28
 #define VERSION_ROW       30
@@ -46,11 +45,10 @@ static u32 s_peak_malloc;
 static u32 s_peak_pool;
 static bool s_console_on = true;
 static bool s_visible = true;
-static char s_boot_lines[MAX_BOOT_ROWS][CONSOLE_ROW_WIDTH_BOTTOM + 1]; /* to redraw after the map */
+static char s_boot_lines[MAX_BOOT_ROWS][CONSOLE_ROW_WIDTH_BOTTOM + 1];
 static char s_title[CONSOLE_ROW_WIDTH_BOTTOM + 1];
 
-/* stdout goes to a null device, as the PC port sends it to NUL unless verbose;
- * the console is switched in only while this code draws. */
+/* stdout goes to a null device unless verbose, as on PC; the console is switched in only while drawing. */
 static const devoptab_t* s_console_dotab;
 
 static ssize_t null_write(struct _reent* r, void* fd, const char* ptr, size_t len)
@@ -84,8 +82,7 @@ void status3ds_init(void)
 {
     consoleInit(GFX_BOTTOM, &s_console);
     s_console_dotab = devoptab_list[STD_OUT];
-    /* consoleInit takes stderr too; until open_log moves it, its "[boot]" lines
-     * would print over the status rows. */
+    /* consoleInit takes stderr too: until open_log moves it, "[boot]" lines would print over the status rows. */
     devoptab_list[STD_ERR] = &NULL_DOTAB;
     snprintf(s_title, sizeof(s_title), "Animal Crossing 3DS %s (developer)", AC3DS_VERSION);
     if (AC3DS_DEBUG) {
@@ -95,8 +92,6 @@ void status3ds_init(void)
     console_end();
 }
 
-/* ---- boot screens (both builds) -------------------------------------------- */
-
 /* Bypasses stdout, which verbose mode reopens on the log file. */
 static void screen_write(const char* text)
 {
@@ -105,7 +100,6 @@ static void screen_write(const char* text)
     }
 }
 
-/* `text` at 1-based `row`, centred, in `color`. */
 static void screen_centred(int row, const char* color, const char* text)
 {
     char line[160];
@@ -135,8 +129,7 @@ static void screen_message(const char* color, const char* heading, const char* m
     gfxFlushBuffers(); /* the console writes the framebuffer through the CPU cache */
 }
 
-/* The key pressed among `keys`; 0 if the system asks the game to close meanwhile
- * (HOME → Close, power off). */
+/* 0 if the system asks the game to close meanwhile (HOME then Close, power off). */
 static u32 wait_for(u32 keys)
 {
     while (aptMainLoop()) {
@@ -154,7 +147,7 @@ void status3ds_loading(const char* what)
 {
     fprintf(stderr, "[boot] %s\n", what);
     if (AC3DS_DEBUG) {
-        return; /* the developer build lists the boot steps instead */
+        return;
     }
     screen_clear();
     screen_centred(TITLE_ROW, COLOR_TITLE, GAME_TITLE);
@@ -202,8 +195,8 @@ void status3ds_set_visible(bool visible)
     if (!visible) {
         return;
     }
-    s_last_refresh_tick = svcGetSystemTick(); /* the fps since now, not since the map opened */
-    if (!s_console_on) { /* verbose mode: just clear the map away */
+    s_last_refresh_tick = svcGetSystemTick();
+    if (!s_console_on) {
         u16 w, h;
         u8* fb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, &w, &h);
         memset(fb, 0, (size_t)w * h * 2); /* RGB565 */
@@ -230,7 +223,6 @@ void status3ds_step(const char* format, ...)
     va_end(args);
     fprintf(stderr, "[boot] %s\n", line);
     if (AC3DS_DEBUG && s_console_on && s_boot_row < 2 + MAX_BOOT_ROWS) {
-        /* longer lines are cut on screen anyway */
         memcpy(s_boot_lines[s_boot_row - 2], line, sizeof(s_boot_lines[0]) - 1);
         s_boot_lines[s_boot_row - 2][sizeof(s_boot_lines[0]) - 1] = '\0';
         console_begin();

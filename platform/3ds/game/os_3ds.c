@@ -1,6 +1,4 @@
-/* os_3ds.c - Dolphin OS replacement: arena, timers, threads, message queues.
- * A copy of pc/src/pc_os.c (ACGC-PC-Port, MIT) on the 3DS system tick, which
- * stops during sleep: os3ds_clock_frame catches up with the wall clock. */
+/* Copy of pc/src/pc_os.c (ACGC-PC-Port, MIT) on the 3DS system tick, which stops in sleep. */
 #include "pc_platform.h"
 
 #include <3ds/svc.h> /* not <3ds.h>: libctru's os.h has its own osGetTime */
@@ -9,8 +7,7 @@
 #include "gc_clock.h"
 #include "os_3ds.h"
 
-/* libctru's wall clock (ms since 1900, right after sleep too); pc_platform.h
- * renames the game's osGetTime away from it. */
+/* libctru's osGetTime (ms since 1900, right after sleep too); pc_platform.h renames the game's away. */
 #undef osGetTime
 u64 osGetTime(void);
 static u64 wall_ms(void) { return osGetTime(); }
@@ -19,7 +16,6 @@ static u64 wall_ms(void) { return osGetTime(); }
 #define CATCH_UP_THRESHOLD_MS 2000 /* more than the system tick's drift from the RTC */
 #define GC_TICKS_PER_MS       (GC_TIMER_CLOCK / 1000)
 
-/* --- Memory arena --- */
 static u8* arena_memory = NULL;
 static u8* arena_lo = NULL;
 static u8* arena_hi = NULL;
@@ -29,17 +25,15 @@ void* OSGetArenaHi(void) { return arena_hi; }
 void  OSSetArenaLo(void* lo) { arena_lo = (u8*)lo; }
 void  OSSetArenaHi(void* hi) { arena_hi = (u8*)hi; }
 
-/* --- Time/clock --- */
 u32 pc_OSBusClock  = GC_BUS_CLOCK;
 u32 pc_OSCoreClock = GC_CORE_CLOCK;
 
 static u64 time_base_start = 0;
-static s64 gc_epoch_offset_ticks = 0; /* Ticks from GC epoch to program start */
+static s64 gc_epoch_offset_ticks = 0;
 static u64 wall_start_ms = 0;
-static s64 slept_ms = 0;      /* game thread only */
-static s64 slept_ticks = 0;   /* in GC ticks; read by any thread */
+static s64 slept_ms = 0;    /* game thread only */
+static s64 slept_ticks = 0; /* in GC ticks; read by any thread */
 
-/* GC epoch: Jan 1, 2000 (946684800 seconds after Unix epoch) */
 #define GC_UNIX_EPOCH_DIFF 946684800LL
 
 s64 osGetTime(void) {
@@ -66,7 +60,6 @@ void os3ds_clock_frame(void)
 
 s64 OSGetTime(void) { return osGetTime(); }
 
-/* same as OSGetTime on PC (no time_adjust needed) */
 s64 __OSGetSystemTime(void) { return OSGetTime(); }
 
 u32 osGetCount(void) {
@@ -75,7 +68,6 @@ u32 osGetCount(void) {
 
 u32 OSGetTick(void) { return osGetCount(); }
 
-/* --- Calendar time (ported from OSTime.c) --- */
 #define OS_TIMER_CLOCK          GC_TIMER_CLOCK
 #define OSSecondsToTicks(sec)   ((s64)(sec) * (s64)OS_TIMER_CLOCK)
 #define OSTicksToSeconds(ticks) ((s64)(ticks) / (s64)OS_TIMER_CLOCK)
@@ -93,8 +85,7 @@ u32 OSGetTick(void) { return osGetCount(); }
 #define SECS_IN_HOUR (60 * 60)
 #define SECS_IN_DAY  (60 * 60 * 24)
 #define SECS_IN_YEAR (SECS_IN_DAY * 365)
-/* Days from March 1, year 0 (proleptic Gregorian) to Jan 1, 2000 (GC epoch).
- * = 2000*365 + floor(2000/4) - floor(2000/100) + floor(2000/400) = 730485 */
+/* Days from Jan 1, year 0 (proleptic Gregorian) to Jan 1, 2000, the GC epoch: 730485. */
 #define BIAS         0xB2575
 
 static int YearDays_os[MONTH_MAX]
@@ -116,26 +107,27 @@ static int GetLeapDays(int year) {
     return (year + 3) / 4 - (year - 1) / 100 + (year - 1) / 400;
 }
 
+/* td: OSCalendarTime's ints: sec, min, hour, mday, mon, year, wday, yday, msec, usec. */
 static void GetDates(int days, void* td_ptr) {
     int* td = (int*)td_ptr;
     int year, n, month;
     int* md;
 
-    td[6] = (days + 6) % WEEK_DAY_MAX;  /* wday */
+    td[6] = (days + 6) % WEEK_DAY_MAX;
 
     for (year = days / YEAR_DAY_MAX;
          days < (n = year * YEAR_DAY_MAX + GetLeapDays(year)); year--)
         ;
 
     days -= n;
-    td[5] = year;   /* year */
-    td[7] = days;   /* yday */
+    td[5] = year;
+    td[7] = days;
 
     md = IsLeapYear(year) ? LeapYearDays_os : YearDays_os;
     for (month = MONTH_MAX; days < md[--month]; )
         ;
-    td[4] = month;               /* mon */
-    td[3] = days - md[month] + 1; /* mday */
+    td[4] = month;
+    td[3] = days - md[month] + 1;
 }
 
 void OSTicksToCalendarTime(s64 ticks, void* td_ptr) {
@@ -148,8 +140,8 @@ void OSTicksToCalendarTime(s64 ticks, void* td_ptr) {
         d += OSSecondsToTicks(1);
     }
 
-    td[9] = (int)(OSTicksToMicroseconds(d) % USEC_MAX); /* usec */
-    td[8] = (int)(OSTicksToMilliseconds(d) % MSEC_MAX); /* msec */
+    td[9] = (int)(OSTicksToMicroseconds(d) % USEC_MAX);
+    td[8] = (int)(OSTicksToMilliseconds(d) % MSEC_MAX);
 
     ticks -= d;
 
@@ -161,9 +153,9 @@ void OSTicksToCalendarTime(s64 ticks, void* td_ptr) {
     }
 
     GetDates(days, td);
-    td[2] = secs / 60 / 60;  /* hour */
-    td[1] = secs / 60 % 60;  /* min */
-    td[0] = secs % 60;       /* sec */
+    td[2] = secs / 60 / 60;
+    td[1] = secs / 60 % 60;
+    td[0] = secs % 60;
 }
 
 s64 OSCalendarTimeToTicks(void* td_ptr) {
@@ -171,7 +163,7 @@ s64 OSCalendarTimeToTicks(void* td_ptr) {
     s64 secs;
     int ov_mon, mon, year;
 
-    ov_mon = td[4] / MONTH_MAX;  /* mon / 12 */
+    ov_mon = td[4] / MONTH_MAX;
     mon = td[4] - (ov_mon * MONTH_MAX);
 
     if (mon < 0) {
@@ -179,7 +171,7 @@ s64 OSCalendarTimeToTicks(void* td_ptr) {
         ov_mon--;
     }
 
-    year = td[5] + ov_mon;  /* year + overflow months as years */
+    year = td[5] + ov_mon;
 
     secs = (s64)SECS_IN_YEAR * year +
            (s64)SECS_IN_DAY * (GetLeapDays(year) + GetYearDays(year, mon) + td[3] - 1) +
@@ -197,19 +189,16 @@ void OSGetSaveRegion(void** start, void** end) {
     *end = NULL;
 }
 
-/* --- Threads (single-threaded, all no-ops) --- */
 typedef struct OSThread {
     void* stackBase;
     void* stackEnd;
     int priority;
-    /* ... rest omitted, game accesses via pointers */
-    u8 _pad[512]; /* padding for fields the game might access */
+    u8 _pad[512];
 } OSThread_PC;
 
 static OSThread_PC main_thread;
 static OSThread_PC* current_thread = &main_thread;
 
-/* N64 libultra message queue wrappers → Dolphin OS */
 void OSInitMessageQueue(void* queue, void** msgArray, int msgCount);
 BOOL OSSendMessage(void* queue, void* msg, int flags);
 BOOL OSReceiveMessage(void* queue, void** msgPtr, int flags);
@@ -237,7 +226,6 @@ void osCreateThread2(void* thread, int id, void (*entry)(void*), void* arg,
 }
 
 void osStartThread(void* thread) {
-    /* don't actually start threads — single-threaded mode */
     (void)thread;
     pending_thread_entry = NULL;
     pending_thread_arg = NULL;
@@ -245,14 +233,12 @@ void osStartThread(void* thread) {
 
 void osSetThreadPri(void* thread, int pri) { (void)thread; (void)pri; }
 void* OSGetCurrentThread(void) { return current_thread; }
-void* OSGetStackPointer(void) { return &arena_memory; /* dummy */ }
+void* OSGetStackPointer(void) { return &arena_memory; }
 
-/* --- Interrupts --- */
 BOOL OSDisableInterrupts(void) { return 0; }
 BOOL OSEnableInterrupts(void) { return 0; }
 BOOL OSRestoreInterrupts(BOOL level) { return level; }
 
-/* --- Cache (no-ops on PC) --- */
 void DCFlushRange(void* addr, u32 len) { (void)addr; (void)len; }
 void DCTouchRange(void* addr, u32 len) { (void)addr; (void)len; }
 void DCStoreRange(void* addr, u32 len) { (void)addr; (void)len; }
@@ -265,7 +251,6 @@ void ICInvalidateRange(void* addr, u32 len) { (void)addr; (void)len; }
 void LCEnable(void) {}
 void LCDisable(void) {}
 
-/* --- Init --- */
 void OSInit(void) {
     if (!arena_memory) {
         arena_memory = (u8*)malloc(PC_MAIN_MEMORY_SIZE);
@@ -275,7 +260,7 @@ void OSInit(void) {
         }
         memset(arena_memory, 0, PC_MAIN_MEMORY_SIZE);
 
-        /* GC system info at phys addr 0; offset 0x28 = mem size for JKRHeap */
+        /* GC system info at physical 0: offset 0x28 is the memory size JKRHeap reads. */
         *(u32*)(arena_memory + 0x28) = PC_MAIN_MEMORY_SIZE;
 
         arena_lo = arena_memory + 0x3100;
@@ -285,19 +270,17 @@ void OSInit(void) {
     wall_start_ms = wall_ms();
     slept_ms = 0;
     __atomic_store_n(&slept_ticks, 0, __ATOMIC_RELAXED);
-    /* compute ticks from GC epoch (Jan 1, 2000) to now, with timezone */
     {
         time_t unix_now = time(NULL);
 
         struct tm* gmt = gmtime(&unix_now);
         if (!gmt) { gc_epoch_offset_ticks = 0; return; }
         struct tm utc_tm = *gmt;
-        utc_tm.tm_isdst = -1; /* let mktime determine DST */
+        utc_tm.tm_isdst = -1;
         time_t utc_as_local = mktime(&utc_tm);
         s64 tz_offset_secs = (s64)difftime(unix_now, utc_as_local);
 
         if (g_pc_time_override >= 0 || g_pc_date_month > 0) {
-            /* --time H[:M[:S]] / --date M/D[/Y] overrides */
             struct tm* lt = localtime(&unix_now);
             if (lt) {
                 struct tm ovr = *lt;
@@ -354,7 +337,6 @@ void OSVReport(const char* fmt, va_list list) {
 
 void OSReportDisable(void) {}
 
-/* --- Alarms --- */
 typedef struct OSAlarm { u8 _pad[64]; } OSAlarm;
 void OSSetAlarm(OSAlarm* alarm, s64 tick, void (*callback)(OSAlarm*, void*)) {
     (void)alarm; (void)tick; (void)callback;
@@ -365,7 +347,6 @@ void OSSetPeriodicAlarm(OSAlarm* alarm, s64 start, s64 period, void (*callback)(
 void OSCancelAlarm(OSAlarm* alarm) { (void)alarm; }
 void OSCreateAlarm(OSAlarm* alarm) { memset(alarm, 0, sizeof(OSAlarm)); }
 
-/* --- Reset --- */
 BOOL OSGetResetSwitchState(void) { return FALSE; }
 void OSResetSystem(int reset, u32 resetCode, BOOL forceMenu) {
     g_pc_running = 0;
@@ -375,7 +356,6 @@ void OSChangeBootMode(u32 mode) { (void)mode; }
 
 int __osResetSwitchPressed = 0;
 
-/* --- Address translation (physical addr → arena_memory offset) --- */
 void* OSPhysicalToCached(u32 paddr) { return (void*)(arena_memory + paddr); }
 void* OSPhysicalToUncached(u32 paddr) { return (void*)(arena_memory + paddr); }
 u32 OSCachedToPhysical(void* caddr) { return (u32)((u8*)caddr - arena_memory); }
@@ -385,7 +365,6 @@ void* OSUncachedToCached(void* ucaddr) { return ucaddr; }
 
 s32 osAppNMIBuffer[64] = {0};
 
-/* --- Misc --- */
 void osShutdownStart(int type) {
     g_pc_running = 0;
 }
@@ -415,14 +394,13 @@ BOOL OSTryLockMutex(OSMutex* mutex) {
     return TRUE;
 }
 
-/* --- Message queue --- */
-/* matches OSMessageQueue from dolphin/os/OSMessage.h */
+/* OSMessageQueue's layout (dolphin/os/OSMessage.h); the thread queues are unused. */
 typedef struct {
-    u8  _threadQueues[16]; /* queueSend + queueReceive - unused on PC */
-    void** msgArray;       /* _10 */
-    int msgCount;          /* _14 */
-    int firstIndex;        /* _18 */
-    int usedCount;         /* _1C */
+    u8  _threadQueues[16];
+    void** msgArray;
+    int msgCount;
+    int firstIndex;
+    int usedCount;
 } OSMessageQueue_PC;
 
 void OSInitMessageQueue(void* queue, void** msgArray, int msgCount) {
@@ -437,7 +415,6 @@ void OSInitMessageQueue(void* queue, void** msgArray, int msgCount) {
 BOOL OSSendMessage(void* queue, void* msg, int flags) {
     OSMessageQueue_PC* mq = (OSMessageQueue_PC*)queue;
     if (mq->usedCount >= mq->msgCount) {
-        /* full */
         return FALSE;
     }
     int idx = (mq->firstIndex + mq->usedCount) % mq->msgCount;
@@ -470,11 +447,9 @@ BOOL OSJamMessage(void* queue, void* msg, int flags) {
     return TRUE;
 }
 
-/* --- Heap --- */
 volatile int __OSCurrHeap = -1;
 
 void* OSInitAlloc(void* arenaStart, void* arenaEnd, int maxHeaps) {
-    /* skip past heap descriptors */
     uintptr_t arraySize = (uintptr_t)maxHeaps * 24;
     uintptr_t newStart = ((uintptr_t)arenaStart + arraySize + 0x1F) & ~(uintptr_t)0x1F;
     return (void*)newStart;

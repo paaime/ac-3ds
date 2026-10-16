@@ -1,4 +1,3 @@
-/* Host tests for wave_pool.c. */
 #include "wave_pool.h"
 
 #include <stdio.h>

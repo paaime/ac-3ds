@@ -1,12 +1,5 @@
-# Host tests for the GX backend's pure modules (no libctru); the rest of gfx/ is built into the game
-# by platform/3ds/CMakeLists.txt.
-#
-#   make test       build and run every test
-#   make coverage   run the tests with clang source-based coverage and print a report
-#   make clean
-
 HOSTCC        ?= cc
-# pc/include gives the tests the PC port's recorded TEV configs (pc_shader_seed.h).
+# pc/include holds the PC port's recorded TEV configs the tests use (pc_shader_seed.h).
 HOST_CFLAGS   := -std=c11 -Wall -Wextra -Werror -O2 -I. -I../../../pc/include
 BUILD         := build/host
 MODULES       := gx_tev gx_alpha_test gx_uv gx_dlist gx_fog gx_screen gx_tev_cache

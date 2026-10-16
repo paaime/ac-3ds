@@ -1,16 +1,13 @@
-/* audio_thread_3ds.c - the mixer thread, woken by every
- * ndsp DSP frame. It talks to the game thread through jaudio's message queues,
- * which take a lock on TARGET_PC (jaudio_NES/internal/os.c). */
 #include <3ds.h>
 
 #include "audio_out_3ds.h"
 #include "audio_thread_3ds.h"
 
 #define STACK_BYTES      (256u * 1024u) /* jaudio's mixer frames are large */
-#define MIXER_CORE       2              /* New 3DS: free for applications */
+#define MIXER_CORE       2
 #define WAIT_TIMEOUT_NS  (20LL * 1000 * 1000) /* stay responsive while ndsp is paused (HOME menu) */
 #define HIGHEST_APP_PRIO 0x18
-#define MAIN_PRIO_GUESS  0x30 /* libctru's main thread priority, if the query fails */
+#define MAIN_PRIO_GUESS  0x30
 #define JOIN_TIMEOUT_NS  U64_MAX
 
 static Thread s_thread;
@@ -18,6 +15,7 @@ static volatile bool s_running;
 static AudioFillFn s_fill;
 static int s_core = -1;
 
+/* Talks to the game thread through jaudio's message queues, which lock on TARGET_PC. */
 static void thread_main(void* arg)
 {
     (void)arg;
@@ -27,7 +25,7 @@ static void thread_main(void* arg)
     }
 }
 
-/* One step above the game thread, against system threads on core 2. */
+/* One step above the game thread: safe only because core 2 isn't the game's core. */
 static s32 mixer_priority(void)
 {
     s32 prio = MAIN_PRIO_GUESS;

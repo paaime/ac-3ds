@@ -1,10 +1,6 @@
 #ifndef AC3DS_FEED_RATE_H
 #define AC3DS_FEED_RATE_H
 
-/* The rate NES sound really arrives at, over ~0.5 s windows, clamped near
- * nominal: it absorbs drift and jitter, while a big slowdown gives gaps rather
- * than a deep pitch drop. A pause restarts the window. */
-
 #include <stdint.h>
 
 #define FEED_RATE_MIN_RATIO 0.9f

@@ -5,7 +5,7 @@ uint64_t gc_clock_convert(uint64_t ticks, uint32_t from_hz, uint32_t to_hz)
     if (from_hz == 0) {
         return 0;
     }
-    /* whole seconds, then the remainder: (rem < from_hz) * to_hz < 2^64 */
+    /* ticks * to_hz would overflow after ~28 min of 268 MHz ticks: whole seconds first. */
     uint64_t seconds = ticks / from_hz;
     uint64_t rem = ticks % from_hz;
     return seconds * to_hz + rem * to_hz / from_hz;

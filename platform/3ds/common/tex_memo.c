@@ -1,9 +1,8 @@
-/* tex_memo.c - the hash is MurmurHash3's 32-bit variant: a word at a time,
- * and its final mix spreads 32-byte aligned addresses. */
 #include "tex_memo.h"
 
 #include <string.h>
 
+/* MurmurHash3's 32-bit variant: its final mix spreads 32-byte aligned addresses. */
 #define MURMUR_C1    0xCC9E2D51u
 #define MURMUR_C2    0x1B873593u
 #define MURMUR_ADD   0xE6546B64u

@@ -1,4 +1,3 @@
-/* Host tests for pcm_stereo.c. */
 #include "pcm_stereo.h"
 
 #include <stdio.h>

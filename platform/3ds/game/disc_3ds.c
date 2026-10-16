@@ -1,5 +1,3 @@
-/* disc_3ds.c - the player's disc image (see disc_3ds.h), found and checked
- * before pc_disc.c opens it, so a failure can name the file. */
 #include "pc_platform.h"
 
 #include <dirent.h>
@@ -15,18 +13,17 @@
 
 #define MESSAGE_MAX 400
 
-static char s_name[320]; /* a directory and a file name (NAME_MAX 255) */
+static char s_name[320];
 
 struct dirent* ac3ds_disc_readdir(DIR* dir)
 {
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL && entry->d_name[0] == '.') {
-        /* hidden, ".", "..", and the "._" files macOS writes beside copies */
+        /* hidden files, ".", "..", and the "._" files macOS writes beside copies */
     }
     return entry;
 }
 
-/* As find_disc_image in pc_disc.c, with the same readdir. */
 static bool find_image(char* out, size_t size)
 {
     static const char* const dirs[] = { ".", "orig", "rom" };
@@ -83,8 +80,7 @@ static bool check_id(const unsigned char header[8])
     return false;
 }
 
-/* A copy cut before the file table's end would have pc_disc.c read garbage for
- * minutes. A .ciso's blocks aren't where the header says. */
+/* A truncated copy has pc_disc.c read garbage for minutes; a .ciso's blocks aren't where the header says. */
 static bool whole(void)
 {
     size_t n = strlen(s_name);

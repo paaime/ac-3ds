@@ -1,5 +1,4 @@
-/* pc_platform.h — 3DS replacement for pc/include/pc_platform.h, force-included
- * with the same include guard so the PC one is never used; no SDL, GL or OS headers. */
+/* Replaces pc/include/pc_platform.h: force-included under the same guard, so the PC one is never used. */
 #ifndef PC_PLATFORM_H
 #define PC_PLATFORM_H
 
@@ -9,8 +8,7 @@
 #error "This project must be compiled as 32-bit (pointer size != 4 bytes)"
 #endif
 
-/* First, as SDL.h does on PC: libultra/osContPad.h #undefs errno for a struct
- * field, and its re-include of <errno.h> must then be a no-op. */
+/* First: libultra/osContPad.h #undefs errno for a struct field, so its re-include of <errno.h> must be a no-op. */
 #include <errno.h>
 #include <math.h>
 #include <stdarg.h>
@@ -26,11 +24,9 @@
 #define TARGET_3DS 1
 #endif
 
-/* libctru's own osGetTime (ms since 1900, used by its time()) clashes at link
- * time with libultra's (GC timer ticks), so the game's is renamed (os_3ds.c). */
+/* libctru's osGetTime (ms since 1900, used by its time()) clashes with libultra's at link time (os_3ds.c). */
 #define osGetTime ac_osGetTime
 
-/* --- Configuration --- */
 #define PC_GC_WIDTH      640
 #define PC_GC_HEIGHT     480
 #define PC_SCREEN_WIDTH  PC_GC_WIDTH
@@ -48,7 +44,6 @@
 #define PC_DEG_TO_RAD  (PC_PI / 180.0)
 #define PC_DEG_TO_RADf (PC_PIf / 180.0f)
 
-/* GC hardware clocks */
 #define GC_BUS_CLOCK   162000000u
 #define GC_CORE_CLOCK  486000000u
 #define GC_TIMER_CLOCK (GC_BUS_CLOCK / 4)
@@ -57,7 +52,6 @@
 extern "C" {
 #endif
 
-/* --- Global state --- */
 extern int g_pc_running;
 extern int g_pc_verbose;
 extern int g_pc_frame_limit_override;
@@ -72,7 +66,6 @@ extern int g_pc_weather_override;
 extern int g_pc_weather_intensity_override;
 extern u32 g_frame_limiter;
 
-/* The "Faster text" setting, read by m_msg_cursol.c_inc. */
 extern int g_ac3ds_fast_text;
 
 /* Set during the boat ride, which switches borderless acres itself. */
@@ -87,12 +80,11 @@ extern int g_pc_window_w;
 extern int g_pc_window_h;
 void pc_platform_update_window_size(void);
 
-/* --- Widescreen mode (see pc/include/pc_platform.h); 0 = hor+ --- */
+/* As in pc/include/pc_platform.h; g_pc_widescreen_stretch 0 is hor+. */
 #define PC_NOOP_WIDESCREEN_STRETCH     0xAC5701u
 #define PC_NOOP_WIDESCREEN_STRETCH_OFF 0xAC5700u
 extern int g_pc_widescreen_stretch;
 
-/* --- Functions --- */
 void pc_platform_init(void);
 void pc_platform_shutdown(void);
 void pc_platform_swap_buffers(void);
@@ -102,12 +94,10 @@ int pc_platform_poll_events(void);
 extern unsigned int pc_image_base;
 extern unsigned int pc_image_end;
 
-/* --- Model viewer (unused on 3DS) --- */
 extern int g_pc_model_viewer;
 extern int g_pc_model_viewer_start;
 extern int g_pc_model_viewer_no_cull;
 
-/* --- Per-frame diagnostics --- */
 extern int pc_emu64_frame_cmds;
 extern int pc_emu64_frame_noop_cmds;
 extern int pc_emu64_frame_tri_cmds;
@@ -117,7 +107,6 @@ extern int pc_emu64_frame_cull_visible;
 extern int pc_emu64_frame_cull_rejected;
 extern int pc_gx_draw_call_count;
 
-/* --- Audio --- */
 extern int pc_save_loaded;
 int pc_audio_get_buffer_fill(void);
 int pc_audio_is_active(void);

@@ -1,4 +1,3 @@
-/* Host tests for gc_clock.c. */
 #include "gc_clock.h"
 
 #include <stdio.h>
@@ -65,20 +64,20 @@ static void test_zero_source_rate(void)
 static void test_in_step_no_catch_up(void)
 {
     CHECK(gc_clock_catch_up_ms(60000, 60000, THRESHOLD_MS) == 0);
-    CHECK(gc_clock_catch_up_ms(61999, 60000, THRESHOLD_MS) == 0); /* drift, not sleep */
+    CHECK(gc_clock_catch_up_ms(61999, 60000, THRESHOLD_MS) == 0);
     CHECK(gc_clock_catch_up_ms(62000, 60000, THRESHOLD_MS) == 0);
 }
 
 static void test_after_sleep_the_gap_is_made_up(void)
 {
-    CHECK(gc_clock_catch_up_ms(60000 + 600000, 60000, THRESHOLD_MS) == 600000); /* ten minutes asleep */
+    CHECK(gc_clock_catch_up_ms(60000 + 600000, 60000, THRESHOLD_MS) == 600000);
     CHECK(gc_clock_catch_up_ms(62001, 60000, THRESHOLD_MS) == 2001);
 }
 
 static void test_never_backwards(void)
 {
-    CHECK(gc_clock_catch_up_ms(60000, 90000, THRESHOLD_MS) == 0); /* the clock ahead of the wall */
-    CHECK(gc_clock_catch_up_ms(-5000, 0, THRESHOLD_MS) == 0);      /* the wall clock set back */
+    CHECK(gc_clock_catch_up_ms(60000, 90000, THRESHOLD_MS) == 0);
+    CHECK(gc_clock_catch_up_ms(-5000, 0, THRESHOLD_MS) == 0);
 }
 
 int main(void)

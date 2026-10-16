@@ -1,4 +1,3 @@
-/* Host tests for tex_memo.c. */
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,7 +25,7 @@ static void test_empty_table_finds_nothing(void)
     clear();
     CHECK(tex_memo_get(s_slots, 0, 1) == TEX_MEMO_NONE);
     CHECK(tex_memo_get(s_slots, 0x12345678u, 1) == TEX_MEMO_NONE);
-    CHECK(tex_memo_get(s_slots, 0, 0) == TEX_MEMO_NONE); /* frame 0 is "never" */
+    CHECK(tex_memo_get(s_slots, 0, 0) == TEX_MEMO_NONE);
 }
 
 static void test_finds_what_this_frame_stored(void)
@@ -56,7 +55,7 @@ static void test_a_slot_keeps_the_last_identity(void)
 {
     clear();
     uint32_t a = 10u;
-    uint32_t b = a + TEX_MEMO_SLOTS; /* the same slot */
+    uint32_t b = a + TEX_MEMO_SLOTS;
     tex_memo_put(s_slots, a, 1, 1);
     tex_memo_put(s_slots, b, 1, 2);
     CHECK(tex_memo_get(s_slots, b, 1) == 2);
@@ -100,8 +99,6 @@ static void test_hash_reads_a_trailing_partial_word(void)
     CHECK(tex_memo_hash(a, 5) == tex_memo_hash(b, 5));
 }
 
-/* Textures sit at 32-byte aligned addresses: their identities must still
- * spread over the slots, or the memo would keep evicting itself. */
 static void test_aligned_addresses_spread_over_the_slots(void)
 {
     static int used[TEX_MEMO_SLOTS];

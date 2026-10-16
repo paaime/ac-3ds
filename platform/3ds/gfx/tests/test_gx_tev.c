@@ -1,8 +1,3 @@
-/* Host tests for gx_tev.c.
- *
- * Instead of hand-written expected outputs, each config is evaluated twice on
- * random inputs: once with a reference model of the GX TEV maths, once with a
- * model of the PICA200 combiner running the translated program. They must agree. */
 #include "gx_tev.h"
 
 #include <math.h>
@@ -23,14 +18,13 @@ static int failures = 0;
 
 #define RGBA(r, g, b, a) \
     (((uint32_t)(r) << 24) | ((uint32_t)(g) << 16) | ((uint32_t)(b) << 8) | (uint32_t)(a))
-/* One 8-bit step: GX registers and the PICA combiner are 8-bit, and the
- * translator folds all-constant sub-expressions into 8-bit constants. */
+/* One 8-bit step: GX and PICA registers are 8-bit, and constant sub-expressions fold to 8 bits. */
 #define TOLERANCE (1.0f / 255.0f + 1e-5f)
 #define RANDOM_TRIALS 200
 #define TEXMAPS 8
 
 typedef struct {
-    float c[4]; /* r, g, b, a */
+    float c[4];
 } Col;
 
 static Col unpack(uint32_t v)
@@ -44,8 +38,6 @@ static float clamp01(float v)
 {
     return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
 }
-
-/* ---- reference GX TEV model ---------------------------------------------- */
 
 typedef struct {
     Col tex[TEXMAPS];
@@ -130,11 +122,7 @@ static Col gx_evaluate(const GxTevConfig* g, const Inputs* in)
     return reg[0];
 }
 
-/* ---- PICA200 combiner model ---------------------------------------------- */
-
-/* The combiner buffer lags one stage behind: stage 0 reads 0 and the buffer
- * colour only reaches stage 1 onwards (Azahar's sw_rasterizer.cpp, from
- * hardware tests). Reading it in stage 0 is a translation bug, so it is NAN here. */
+/* The combiner buffer lags a stage: stage 0 reads 0 (Azahar's sw_rasterizer.cpp, from hardware tests). */
 static float pica_source(const PicaCombiner* p, int stage_index, const PicaCombinerStage* st, const Inputs* in,
                          Col prev, int src, int comp)
 {
@@ -212,8 +200,6 @@ static Col pica_evaluate(const PicaCombiner* p, const Inputs* in)
     return prev;
 }
 
-/* ---- helpers ---------------------------------------------------------------- */
-
 static GxTevChannel color_ch(int a, int b, int c, int d)
 {
     GxTevChannel ch = { { (uint8_t)a, (uint8_t)b, (uint8_t)c, (uint8_t)d }, GXT_OP_ADD, GXT_BIAS_ZERO,
@@ -233,9 +219,9 @@ static GxTevConfig base_config(void)
     GxTevConfig g;
     memset(&g, 0, sizeof(g));
     g.reg[0] = RGBA(0x10, 0x20, 0x30, 0x40);
-    g.reg[1] = RGBA(0xFF, 0x00, 0x80, 0x55); /* REG0: fill */
-    g.reg[2] = RGBA(0xFF, 0xB0, 0x60, 0xC0); /* REG1: prim */
-    g.reg[3] = RGBA(0x30, 0x60, 0xF0, 0x90); /* REG2: env */
+    g.reg[1] = RGBA(0xFF, 0x00, 0x80, 0x55);
+    g.reg[2] = RGBA(0xFF, 0xB0, 0x60, 0xC0);
+    g.reg[3] = RGBA(0x30, 0x60, 0xF0, 0x90);
     g.konst[0] = RGBA(0x12, 0x34, 0x56, 0x78);
     return g;
 }
@@ -254,7 +240,6 @@ static Inputs random_inputs(void)
     return in;
 }
 
-/* Translates `g` and checks the PICA program matches the GX maths on random inputs. */
 static bool matches_reference(const char* name, const GxTevConfig* g, PicaCombiner* out)
 {
     const char* reason = NULL;
@@ -276,8 +261,6 @@ static bool matches_reference(const char* name, const GxTevConfig* g, PicaCombin
     return true;
 }
 
-/* ---- tests ------------------------------------------------------------------ */
-
 static void test_texture_times_shade(void)
 {
     GxTevConfig g = base_config();
@@ -294,7 +277,6 @@ static void test_texture_times_shade(void)
 
 static void test_ac_dominant_combiner(void)
 {
-    /* N64: (TEXEL0*SHADE, TEXEL0) then (PRIM*COMBINED, COMBINED) - 67% of the game. */
     GxTevConfig g = base_config();
     g.stage_count = 2;
     g.stages[0] = stage(color_ch(GXT_CC_ZERO, GXT_CC_TEXC, GXT_CC_RASC, GXT_CC_ZERO),
@@ -309,7 +291,6 @@ static void test_ac_dominant_combiner(void)
 
 static void test_lerp_with_two_constants_uses_buffer(void)
 {
-    /* (PRIM - ENV) * TEXEL0 + ENV == lerp(ENV, PRIM, TEXEL0); alpha TEXEL0 * PRIM alpha. */
     GxTevConfig g = base_config();
     g.stage_count = 1;
     g.stages[0] = stage(color_ch(GXT_CC_C2, GXT_CC_C1, GXT_CC_TEXC, GXT_CC_ZERO),
@@ -317,7 +298,6 @@ static void test_lerp_with_two_constants_uses_buffer(void)
     PicaCombiner p;
     CHECK(matches_reference("lerp env prim", &g, &p));
     CHECK(p.uses_buffer_color);
-    /* stage 0 reads the buffer as 0: the lerp moves behind a pass-through stage */
     CHECK(p.stage_count == 2);
     CHECK(p.stages[0].rgb.func == PICA_FUNC_REPLACE && p.stages[0].rgb.src[0] == PICA_SRC_PRIMARY);
     CHECK(p.stages[1].rgb.func == PICA_FUNC_INTERPOLATE);
@@ -325,7 +305,6 @@ static void test_lerp_with_two_constants_uses_buffer(void)
 
 static void test_buffer_already_past_stage0_needs_no_shift(void)
 {
-    /* tex*shade, then lerp(ENV, PRIM, PREV): the buffer is first read in stage 1. */
     GxTevConfig g = base_config();
     g.stage_count = 2;
     g.stages[0] = stage(color_ch(GXT_CC_ZERO, GXT_CC_TEXC, GXT_CC_RASC, GXT_CC_ZERO),
@@ -340,7 +319,6 @@ static void test_buffer_already_past_stage0_needs_no_shift(void)
 
 static void test_buffer_in_stage0_with_no_room_fails(void)
 {
-    /* Six PICA stages, the first needing two constants: no room for the shift. */
     GxTevConfig g = base_config();
     g.stage_count = 6;
     g.stages[0] = stage(color_ch(GXT_CC_C2, GXT_CC_C1, GXT_CC_TEXC, GXT_CC_ZERO),
@@ -357,8 +335,6 @@ static void test_buffer_in_stage0_with_no_room_fails(void)
 
 static void test_previous_plus_general_lerp(void)
 {
-    /* PREV + lerp(ENV, PRIM, TEXEL0), then the same with PREV as the lerp's a
-     * (b must come second) and as its b (a comes second). */
     static const uint8_t SHAPES[3][2] = { { GXT_CC_C2, GXT_CC_C1 }, { GXT_CC_CPREV, GXT_CC_C1 },
                                           { GXT_CC_C2, GXT_CC_CPREV } };
     for (int i = 0; i < 3; i++) {
@@ -384,12 +360,11 @@ static void test_multiply_add_two_constants(void)
                         color_ch(GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_RASA), GX_TEV_NONE);
     PicaCombiner p;
     CHECK(matches_reference("prim*shade+env", &g, &p));
-    CHECK(p.stage_count == 2); /* two constants in the first stage: pass-through first */
+    CHECK(p.stage_count == 2);
 }
 
 static void test_constant_and_previous_register(void)
 {
-    /* Stage 0 reads PREV: no earlier PICA stage, so it must use the register value. */
     GxTevConfig g = base_config();
     g.stage_count = 2;
     g.stages[0] = stage(color_ch(GXT_CC_ZERO, GXT_CC_ZERO, GXT_CC_ZERO, GXT_CC_CPREV),
@@ -421,13 +396,10 @@ static void test_one_minus_and_trivial_lerps(void)
 {
     GxTevConfig g = base_config();
     g.stage_count = 3;
-    /* a*(1-c): b is zero. */
     g.stages[0] = stage(color_ch(GXT_CC_TEXC, GXT_CC_ZERO, GXT_CC_RASA, GXT_CC_ZERO),
                         color_ch(GXT_CA_TEXA, GXT_CA_ZERO, GXT_CA_RASA, GXT_CA_ZERO), 0);
-    /* c = ONE selects b. */
     g.stages[1] = stage(color_ch(GXT_CC_RASC, GXT_CC_CPREV, GXT_CC_ONE, GXT_CC_ZERO),
                         color_ch(GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_APREV), GX_TEV_NONE);
-    /* x + d with HALF. */
     g.stages[2] = stage(color_ch(GXT_CC_CPREV, GXT_CC_ZERO, GXT_CC_ZERO, GXT_CC_HALF),
                         color_ch(GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_APREV), GX_TEV_NONE);
     PicaCombiner p;
@@ -439,7 +411,7 @@ static void test_sub_half_bias_becomes_add_signed(void)
     GxTevConfig g = base_config();
     g.stage_count = 1;
     GxTevChannel ch = color_ch(GXT_CC_ZERO, GXT_CC_ZERO, GXT_CC_ZERO, GXT_CC_RASC);
-    ch.in[0] = GXT_CC_TEXC; /* lerp(tex, 0, 0) = tex; d + tex - 0.5 */
+    ch.in[0] = GXT_CC_TEXC;
     ch.bias = GXT_BIAS_SUBHALF;
     g.stages[0] = stage(ch, color_ch(GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_TEXA), 0);
     PicaCombiner p;
@@ -461,8 +433,6 @@ static void test_more_konst_selectors(void)
 
 static void test_three_constants_split_across_stages(void)
 {
-    /* lerp(C0, C1, C2) and C1*A0 + C2 need three constants: one PICA stage
-     * only reaches two (its own + the buffer), so they take two stages. */
     GxTevConfig g = base_config();
     g.stage_count = 2;
     g.stages[0] = stage(color_ch(GXT_CC_C0, GXT_CC_C1, GXT_CC_C2, GXT_CC_ZERO),
@@ -471,7 +441,7 @@ static void test_three_constants_split_across_stages(void)
                         color_ch(GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_ZERO, GXT_CA_APREV), GX_TEV_NONE);
     PicaCombiner p;
     CHECK(matches_reference("three constants", &g, &p));
-    CHECK(p.stage_count == 2); /* both all-constant stages fold to one constant each */
+    CHECK(p.stage_count == 2);
 }
 
 static void test_konst_selectors(void)
@@ -485,8 +455,6 @@ static void test_konst_selectors(void)
     CHECK(gx_tev_konst_alpha(&g, 0x04) == RGBA(127, 127, 127, 127));     /* KASEL_1_2 */
 }
 
-/* ---- the 139 TEV configurations the PC port recorded during real gameplay --- */
-
 #include "pc_shader_seed.h" /* pc/include: pc_shader_seed_keys[139][122] */
 
 #define SEED_HEADER_BYTES 29 /* num_stages, num_ind, fog, alpha[3], light[7], swap_tbl[16] */
@@ -497,8 +465,7 @@ static uint32_t random_rgba(void)
     return ((uint32_t)rand() << 16) ^ (uint32_t)rand();
 }
 
-/* PCGXShaderKey (pc/include/pc_gx_internal.h) -> GxTevConfig. The key doesn't
- * record texmap ids, so each texturing stage samples texmap == its texcoord. */
+/* PCGXShaderKey (pc_gx_internal.h) has no texmap ids: each texturing stage samples texmap == texcoord. */
 static GxTevConfig config_from_seed(const unsigned char* key)
 {
     GxTevConfig g;
@@ -598,7 +565,7 @@ static void test_unsupported_features(void)
     GxTevConfig texcoord_clash = g;
     texcoord_clash.stage_count = 2;
     texcoord_clash.stages[1] = g.stages[0];
-    texcoord_clash.stages[1].tex_map = 1; /* same texcoord 0, different texmap */
+    texcoord_clash.stages[1].tex_map = 1;
     expect_unsupported("texcoord clash", &texcoord_clash);
 
     GxTevConfig prev_minus = g;
@@ -620,7 +587,7 @@ static void test_unsupported_features(void)
     prev_ab.stages[1].color.in[2] = GXT_CC_TEXC;
     expect_unsupported("PREV + lerp(PREV, PREV, ..)", &prev_ab);
 
-    GxTevConfig coord2 = g; /* first texcoord the shader doesn't generate */
+    GxTevConfig coord2 = g;
     coord2.stages[0].tex_coord = GX_TEV_MAX_TEXCOORDS;
     expect_unsupported("texcoord 2", &coord2);
 

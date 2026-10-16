@@ -41,7 +41,7 @@ static float fog_amount(uint8_t curve, float z)
     case CURVE_EXP2: return 1.0f - exp2f(-EXP_STEEPNESS * z * z);
     case CURVE_REVEXP: return exp2f(-EXP_STEEPNESS * (1.0f - z));
     case CURVE_REVEXP2: return exp2f(-EXP_STEEPNESS * (1.0f - z) * (1.0f - z));
-    default: return z; /* linear */
+    default: return z;
     }
 }
 

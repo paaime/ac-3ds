@@ -1369,10 +1369,6 @@ extern void mMP_map_ovl_construct(Submenu* submenu) {
 #ifdef TARGET_3DS
 #include <stdlib.h>
 
-/* The 3DS bottom screen's always-on map (platform/3ds/game/town_map_3ds.c):
- * this menu's own drawing, run outside the pause
- * menu, with a private state and menu info. The caller provides the display
- * list arena (game->graph's polygon list) and runs it. */
 static mMP_Ovl_c* l_3ds_map_ovl;
 static mSM_MenuInfo_c l_3ds_menu;
 
@@ -1382,12 +1378,7 @@ static void mMP_3ds_set_char_matrix(GRAPH* graph) {
     CLOSE_POLY_OPA_DISP(graph);
 }
 
-/* Where the map would put the player, as mMP_set_init_data computes it, and
- * whether the game would let the map open here (mSM_check_open_map_new,
- * without its button): a player, the opening intro over, not an island
- * cottage or the ocean, and an acre of the town grid. Rooms with no door back
- * to the town (player select, save, the train) give a room position, which
- * falls outside the grid; mMP_set_init_data would index past its tables. */
+/* Rooms with no door back to the town give a position off the grid: mMP_set_init_data would overrun. */
 static int mMP_3ds_can_show(GAME_PLAY* play) {
     PLAYER_ACTOR* player = get_player_actor_withoutCheck(play);
     xyz_t pos;
@@ -1411,9 +1402,6 @@ static int mMP_3ds_can_show(GAME_PLAY* play) {
            mFI_CheckBlockKind_OR(bx, bz, mRF_BLOCKKIND_OCEAN) == FALSE;
 }
 
-/* Fills the map's data from the town and the player, as opening the menu does
- * (no sound, no animation). FALSE if the map can't be shown here or memory
- * ran out. */
 extern int mMP_3ds_refresh(void) {
     if (gamePT == NULL || !mMP_3ds_can_show((GAME_PLAY*)gamePT)) {
         return FALSE;
@@ -1427,20 +1415,16 @@ extern int mMP_3ds_refresh(void) {
     mem_clear((u8*)l_3ds_map_ovl, sizeof(mMP_Ovl_c), 0);
     l_3ds_map_ovl->combination_table = data_combi_table;
     mMP_map_draw_init();
-    bzero(&l_3ds_menu, sizeof(l_3ds_menu)); /* resting position (0, 0) */
-    l_3ds_menu.data0 = 1;                   /* as the pause menu opens it (mSM_submenu_ctrl) */
+    bzero(&l_3ds_menu, sizeof(l_3ds_menu));
+    l_3ds_menu.data0 = 1; /* map button palette, as mSM_submenu_ctrl opens it */
     mMP_set_init_data(l_3ds_map_ovl, &l_3ds_menu);
     return TRUE;
 }
 
-/* Whether the map can show here (mMP_3ds_can_show), without filling it. */
 extern int mMP_3ds_available(void) {
     return gamePT != NULL && mMP_3ds_can_show((GAME_PLAY*)gamePT);
 }
 
-/* The cursor on acre (bx, bz), 0-based, as moving it in the open menu does,
- * without the slide: the panel then shows that acre. After mMP_3ds_refresh,
- * which puts it on the player's acre. */
 extern void mMP_3ds_select(int bx, int bz) {
     if (l_3ds_map_ovl == NULL || bx < 0 || bx >= FG_BLOCK_X_NUM || bz < 0 || bz >= FG_BLOCK_Z_NUM) {
         return;
@@ -1453,8 +1437,6 @@ extern void mMP_3ds_select(int bx, int bz) {
     l_3ds_map_ovl->map_cursor_target_zpos = l_3ds_map_ovl->map_cursor_current_zpos;
 }
 
-/* Pieces of kan_win_model2 (src/data/model/kan_win.c), drawn apart: the
- * grid's frame with the grid, the acre's panel on its own. */
 extern Gfx kan_win_futiT_model[];
 extern Gfx kan_win_futi2T_model[];
 extern Gfx kan_win_sakiT_model[];
@@ -1464,8 +1446,6 @@ extern Gfx kan_win_ban2T_model[];
 extern Gfx kan_win_tyou2T_model[];
 extern Gfx kan_win_bou_model[];
 
-/* As mMP_set_dl starts: the menus' units with the window at rest, the
- * caller's orthographic view, and the map button's palette (data0 = 1). */
 static void mMP_3ds_begin(GRAPH* graph, Mtx* projection) {
     Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
     Matrix_translate(0.0f, 0.0f, 140.0f, MTX_MULT);
@@ -1480,9 +1460,6 @@ static void mMP_3ds_begin(GRAPH* graph, Mtx* projection) {
     CLOSE_POLY_OPA_DISP(graph);
 }
 
-/* The acre grid as the open menu draws it, without the window and its row
- * and column labels: the tiles, the grid's frame, the houses, the player's
- * acre and the cursor. */
 extern void mMP_3ds_draw_grid(GAME* game, Mtx* projection) {
     GRAPH* graph = game->graph;
 
@@ -1502,9 +1479,6 @@ extern void mMP_3ds_draw_grid(GAME* game, Mtx* projection) {
     mMP_set_cursol_dl(graph, l_3ds_map_ovl, 0.0f, 0.0f);
 }
 
-/* The acre's panel as the open menu draws it (mMP_set_win_dl and after):
- * the "TOWN MAP" heading, the bubble with the acre's name, its houses and
- * their owners. */
 extern void mMP_3ds_draw_panel(GAME* game, Mtx* projection) {
     GRAPH* graph = game->graph;
     mMP_Ovl_c* map_ovl = l_3ds_map_ovl;

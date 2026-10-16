@@ -1,4 +1,3 @@
-/* Host tests for gc_ortho.c. */
 #include "gc_ortho.h"
 
 #include <math.h>
@@ -17,7 +16,6 @@ static int failures = 0;
 
 #define NEAR_EQ(a, b) (fabsf((a) - (b)) < 1e-5f)
 
-/* clip = m * (x, y, z, 1) */
 static void apply(const float m[4][4], float x, float y, float z, float out[4])
 {
     for (int r = 0; r < 4; r++) {
@@ -31,11 +29,11 @@ static void test_depth_maps_to_the_gx_range(void)
     float m[4][4];
     gc_ortho(m, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
     float c[4];
-    apply(m, 0.0f, 0.0f, 1.0f, c); /* eye z = -near */
+    apply(m, 0.0f, 0.0f, 1.0f, c);
     CHECK(NEAR_EQ(c[2], -1.0f));
-    apply(m, 0.0f, 0.0f, -1.0f, c); /* eye z = -far */
+    apply(m, 0.0f, 0.0f, -1.0f, c);
     CHECK(NEAR_EQ(c[2], 0.0f));
-    apply(m, 0.0f, 0.0f, 0.0f, c); /* emu64's 2D rectangles sit at z = 0 */
+    apply(m, 0.0f, 0.0f, 0.0f, c);
     CHECK(NEAR_EQ(c[2], -0.5f));
     CHECK(NEAR_EQ(c[3], 1.0f));
 }
@@ -43,7 +41,7 @@ static void test_depth_maps_to_the_gx_range(void)
 static void test_xy_map_the_box_to_minus_one_one(void)
 {
     float m[4][4];
-    gc_ortho(m, 0.0f, -480.0f, 0.0f, 640.0f, 0.0f, 2000.0f); /* famicom.cpp's 2D view */
+    gc_ortho(m, 0.0f, -480.0f, 0.0f, 640.0f, 0.0f, 2000.0f);
     float c[4];
     apply(m, 0.0f, 0.0f, 0.0f, c);
     CHECK(NEAR_EQ(c[0], -1.0f));

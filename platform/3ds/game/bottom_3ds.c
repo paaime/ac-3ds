@@ -1,5 +1,3 @@
-/* bottom_3ds.c - what the bottom screen shows and when it is redrawn (see
- * bottom_3ds.h): only when something shown changes, else it keeps its picture. */
 #include <3ds.h>
 #include <citro3d.h>
 #include <stdint.h>
@@ -21,11 +19,11 @@
 
 #define MIN_CMDBUF_WORDS 32768 /* ~400 draws of ~55 words: Options draws each character apart */
 #define CLEAR_DEPTH      0
-#define COLOR_BG         0xFCEEC8FFu /* 0xRRGGBBAA; all of it is drawn over */
-#define REFRESH_FRAMES   1800 /* ~30 s, for names, new villagers, the bridge */
-#define MAX_RETRIES      3    /* for a partial picture, then left until a change */
+#define COLOR_BG         0xFCEEC8FFu /* 0xRRGGBBAA */
+#define REFRESH_FRAMES   1800 /* ~30 s: catches names, new villagers, the bridge */
+#define MAX_RETRIES      3
 #define STATS_HOLD_MS    2000u
-#define NEVER_HELD       UINT32_MAX /* hold threshold: always a tap */
+#define NEVER_HELD       UINT32_MAX
 #define ACRE_SHOWN_MS    15000u
 #define SAVE_STEADY_MS   500u
 
@@ -34,14 +32,13 @@
      GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) |                                  \
      GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB565) | GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
-/* What decides a redraw. */
 typedef struct {
     BottomView view;
-    bool play_scene;        /* the map may show */
+    bool play_scene;
     SettingsPage options_page;
     int options_sheet;
-    int acre_col, acre_row; /* -1 off the map */
-    int chosen_col, chosen_row; /* a tapped acre, -1 for none */
+    int acre_col, acre_row;
+    int chosen_col, chosen_row;
     bool save_available;
     bool indoors;
     Settings settings;
@@ -49,27 +46,26 @@ typedef struct {
 
 static struct {
     bool ready;
-    bool started; /* the boot screen gave way to the map */
+    bool started;
     BottomView view;
-    SettingsPage options_page; /* kept between visits */
+    SettingsPage options_page;
     int options_sheet;
     C3D_RenderTarget* target;
     Shown shown;
     bool dirty;
     uint32_t frames_since_draw;
-    uint32_t retries; /* partial redraws in a row */
+    uint32_t retries;
     bool retrying;
-    PressHold corner; /* the Options button */
+    PressHold corner;
     PressHold save;
     bool save_shown;
-    bool save_fresh;      /* new view: take the state at once */
+    bool save_fresh;
     Debounce save_change;
     AcreSelect chosen;
-    int player_col, player_row; /* -1 off the map */
+    int player_col, player_row;
     aptHookCookie apt_hook;
 } B;
 
-/* A press in progress when the HOME Menu or sleep comes is dropped. */
 static void on_apt(APT_HookType type, void* param)
 {
     (void)param;
@@ -86,7 +82,7 @@ bool bottom3ds_init(void)
         return false;
     }
     bottom_ui_init();
-    B.view = BOTTOM_DEBUG; /* the boot steps, until the first bottom3ds_input */
+    B.view = BOTTOM_DEBUG;
     B.chosen = acre_select_none();
     B.player_col = B.player_row = -1;
     aptHook(&B.apt_hook, on_apt, NULL);
@@ -96,7 +92,7 @@ bool bottom3ds_init(void)
 
 void bottom3ds_shutdown(void)
 {
-    settings3ds_save(); /* a change made just before quitting */
+    settings3ds_save();
     if (B.ready) {
         aptUnhook(&B.apt_hook);
     }
@@ -107,8 +103,7 @@ void bottom3ds_shutdown(void)
     }
 }
 
-/* The render target and the CPU debug console share the bottom framebuffer;
- * only one owns it. Between frames only, with no citro3d frame open. */
+/* The render target and the debug console share the bottom framebuffer; outside a citro3d frame only. */
 static void set_view(BottomView next)
 {
     bool was_debug = B.view == BOTTOM_DEBUG;
@@ -117,12 +112,12 @@ static void set_view(BottomView next)
     B.save_fresh = true;
     B.chosen = acre_select_none();
     if (B.view == BOTTOM_OPTIONS && next != BOTTOM_OPTIONS) {
-        settings3ds_save(); /* once per visit, not on every tap */
+        settings3ds_save();
     }
     B.view = next;
     B.dirty = true;
     if (next == BOTTOM_DEBUG && !was_debug) {
-        C3D_RenderTargetSetOutput(NULL, GFX_BOTTOM, GFX_LEFT, 0); /* waits for the GPU */
+        C3D_RenderTargetSetOutput(NULL, GFX_BOTTOM, GFX_LEFT, 0);
         status3ds_set_visible(true);
     } else if (next != BOTTOM_DEBUG && was_debug) {
         status3ds_set_visible(false);
@@ -146,7 +141,6 @@ void bottom3ds_toggle(void)
     }
 }
 
-/* True if the touch hit an arrow. */
 static bool touch_pager(int x, int y, int sheets)
 {
     BottomPager arrow = bottom_layout_pager_at(x, y);
@@ -229,7 +223,6 @@ void bottom3ds_touch(int x, int y)
     }
 }
 
-/* Options: a tap toggles the page, a hold shows the debug stats (developer build). Save: on release. */
 void bottom3ds_touch_held(bool held)
 {
     if (!B.ready) {
@@ -238,7 +231,7 @@ void bottom3ds_touch_held(bool held)
     PressStep save = press_hold_step(B.save, held, clock3ds_ms(), NEVER_HELD);
     B.save = save.state;
     if (save.event == PRESS_TAP) {
-        quick_save3ds_start(); /* checked again now: does nothing if it can't */
+        quick_save3ds_start(); /* checks again: does nothing if it can't */
     }
     PressStep step = press_hold_step(B.corner, held, clock3ds_ms(), AC3DS_DEBUG ? STATS_HOLD_MS : NEVER_HELD);
     B.corner = step.state;
@@ -249,8 +242,7 @@ void bottom3ds_touch_held(bool held)
     }
 }
 
-/* Follows quick_save3ds_available once steady for SAVE_STEADY_MS, so a tool's
- * swing (START blocked for a moment) doesn't blink the Save button. */
+/* Debounced: a tool's swing blocks START for a moment and would blink the Save button. */
 static bool save_looks_available(void)
 {
     bool usable = B.view == BOTTOM_MAP && quick_save3ds_available();
@@ -324,11 +316,11 @@ static void render(Shown now)
     B.retrying = false;
     BottomUiResult result = bottom_ui_render(model);
     if (result == BOTTOM_UI_NOT_YET) {
-        B.dirty = true; /* no game yet: every frame */
+        B.dirty = true;
     } else if (result == BOTTOM_UI_PARTIAL && B.retries < MAX_RETRIES) {
         B.retries++;
         B.retrying = true;
-        B.dirty = true; /* short of draws or textures */
+        B.dirty = true;
     }
 }
 

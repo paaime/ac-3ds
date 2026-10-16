@@ -1,4 +1,3 @@
-/* Host tests for light_timer.c. */
 #include "light_timer.h"
 
 #include <stdio.h>
@@ -58,7 +57,6 @@ static void test_turning_the_saver_off_lights_it(void)
     CHECK(!t.lit);
     t = light_timer_step(t, false, false, TIMEOUT + 1, TIMEOUT);
     CHECK(t.lit);
-    /* and the wait starts from then, not from the old touch */
     t = light_timer_step(t, true, false, TIMEOUT + 2, TIMEOUT);
     CHECK(t.lit);
 }
@@ -73,7 +71,7 @@ static void test_the_step_returns_a_copy(void)
 static void test_a_clock_going_back_does_not_darken(void)
 {
     LightTimer t = light_timer_start(5000);
-    t = light_timer_step(t, true, false, 100, TIMEOUT); /* now before the last touch */
+    t = light_timer_step(t, true, false, 100, TIMEOUT);
     CHECK(t.lit);
 }
 

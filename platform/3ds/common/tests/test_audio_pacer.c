@@ -1,4 +1,3 @@
-/* Host tests for audio_pacer.c. */
 #include "audio_pacer.h"
 
 #include <stdio.h>
@@ -17,7 +16,6 @@ static int failures = 0;
 #define RATE  32000
 #define CHUNK 560 /* stereo frames one mixer call produces */
 
-/* What the 3DS driver does once per video frame: catch up with the clock. */
 static AudioPacer catch_up(AudioPacer p, uint64_t due, int* calls)
 {
     p = audio_pacer_advance_to(p, due);
@@ -36,7 +34,6 @@ static void test_starts_caught_up(void)
 
 static void test_follows_the_clock_not_the_frame_rate(void)
 {
-    /* One second at 30 video frames per second still mixes one second. */
     AudioPacer p = audio_pacer_create(RATE);
     long total = 0;
     for (int f = 1; f <= 30; f++) {
@@ -51,9 +48,9 @@ static void test_resyncs_after_a_long_stall(void)
 {
     AudioPacer p = audio_pacer_create(RATE);
     int calls;
-    p = catch_up(p, 5ull * RATE, &calls); /* five seconds of loading */
+    p = catch_up(p, 5ull * RATE, &calls);
     CHECK(calls <= AUDIO_PACER_MAX_MIXES);
-    CHECK(p.produced + RATE > p.due);     /* the debt was dropped */
+    CHECK(p.produced + RATE > p.due);
     p = catch_up(p, 5ull * RATE + RATE / 60, &calls);
     CHECK(calls <= 1);
 }
@@ -63,9 +60,9 @@ static void test_never_far_ahead(void)
     AudioPacer p = audio_pacer_create(RATE);
     int calls;
     p = catch_up(p, RATE / 60, &calls);
-    CHECK(calls == 1); /* 533 due: one chunk of 560 */
+    CHECK(calls == 1);
     p = catch_up(p, 2 * RATE / 60, &calls);
-    CHECK(calls == 1); /* 1066 due, 560 done */
+    CHECK(calls == 1);
 }
 
 static void test_clock_never_goes_back(void)

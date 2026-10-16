@@ -1,19 +1,16 @@
-/* heap_3ds.c - memory layout (replaces libctru's weak __system_allocateHeaps). A regular heap at
- * 0x08000000 would collide with N64 segments 8-D in emu64's seg2k0, so all free memory is linear
- * (above 0x30000000):  [ malloc heap: main stack, then newlib malloc ][ linearAlloc pool ] */
 #include <3ds.h>
 
 #include "heap_3ds.h"
 #include "mem_layout.h"
 
 #define MB                (1024u * 1024u)
-#define LINEAR_POOL_BYTES (24u * MB) /* textures, vertex ring, command buffer */
-#define MIN_POOL_BYTES    (8u * MB)  /* framebuffers, command buffer, vertex ring + some textures */
+#define LINEAR_POOL_BYTES (24u * MB)
+#define MIN_POOL_BYTES    (8u * MB)
 #define MIN_MALLOC_BYTES  (72u * MB) /* town's measured peak 63.7 MB + margin */
-#define TIGHT_MALLOC_BYTES (64u * MB) /* the peak, no margin: an original 3DS's 75 MB (ac3ds_main.c decides) */
+#define TIGHT_MALLOC_BYTES (64u * MB) /* the peak, no margin: for an original 3DS's 75 MB */
 #define SHRINK_STEP_BYTES (4u * MB)
-#define RESCUE_MALLOC_BYTES (4u * MB) /* main stack (1 MB), console, the error screen */
-#define RESCUE_POOL_BYTES   (2u * MB) /* gfxInitDefault's framebuffers */
+#define RESCUE_MALLOC_BYTES (4u * MB)
+#define RESCUE_POOL_BYTES   (2u * MB)
 
 extern char* fake_heap_start;
 extern char* fake_heap_end;
@@ -46,6 +43,7 @@ static u32 commit_linear(u32 bytes)
     return R_SUCCEEDED(rc) ? addr : 0;
 }
 
+/* Replaces libctru's: all memory is linear, a heap at 0x08000000 would hit segments 8-D in emu64's seg2k0. */
 void __system_allocateHeaps(void)
 {
     u32 available = free_application_memory();
@@ -70,7 +68,7 @@ void __system_allocateHeaps(void)
         base = layout.ok ? commit_linear(layout.total_bytes) : 0;
     }
     if (!layout.ok || base == 0) {
-        svcBreak(USERBREAK_PANIC); /* not even a few MB: nothing can run */
+        svcBreak(USERBREAK_PANIC);
     }
 
     /* No regular heap: these name both parts so __libctru_exit frees them. */
@@ -80,7 +78,7 @@ void __system_allocateHeaps(void)
     __ctru_linear_heap_size = layout.pool_bytes;
     mappableInit(OS_MAP_AREA_BEGIN, OS_MAP_AREA_END);
 
-    /* newlib's heap; libctru's initSystem then carves the main stack from its start */
+    /* newlib's heap; libctru's initSystem carves the main stack from its start */
     fake_heap_start = (char*)base;
     fake_heap_end = fake_heap_start + layout.malloc_bytes;
 

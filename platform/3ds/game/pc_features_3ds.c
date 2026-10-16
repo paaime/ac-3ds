@@ -1,12 +1,8 @@
-/* pc_features_3ds.c - the PC port's optional features (settings file, menus, model viewer), stubbed
- * out: they need SDL and a keyboard. */
 #include "pc_platform.h"
 
 #include "pc_pause_menu.h"
 #include "pc_settings.h"
 #include "pc_settings_menu.h"
-
-/* ---- settings (pc_settings.c defaults) -------------------------------------- */
 
 PCSettings g_pc_settings = {
     .window_width = PC_SCREEN_WIDTH,
@@ -37,8 +33,6 @@ void pc_settings_cycle_resolution(int* width, int* height, int dir)
     (void)dir;
 }
 
-/* ---- title-screen options menu ------------------------------------------------- */
-
 void pc_settings_menu_enter(void) {}
 void pc_settings_menu_tick(void) {}
 
@@ -47,7 +41,7 @@ int pc_settings_menu_active(void)
     return 0;
 }
 
-/* 0 = "the menu is closed", so ac_animal_logo closes it right away. */
+/* 0: the menu is closed, so ac_animal_logo closes it right away. */
 int pc_settings_menu_nav_up(void)
 {
     return 0;
@@ -100,8 +94,6 @@ void pc_settings_menu_draw(struct game_s* game, int with_dim_backdrop)
     (void)with_dim_backdrop;
 }
 
-/* ---- pause menu ------------------------------------------------------------------ */
-
 int g_pc_paused = 0;
 int g_pc_title_main_menu_visible = 0;
 int g_pc_nes_active = 0;
@@ -119,8 +111,6 @@ void pc_pause_menu_draw(struct game_s* game)
 {
     (void)game;
 }
-
-/* ---- model viewer ------------------------------------------------------------------- */
 
 int g_pc_model_viewer = 0;
 int g_pc_model_viewer_start = 0;

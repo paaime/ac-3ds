@@ -1,7 +1,7 @@
 #include "feed_rate.h"
 
-#define WINDOW_DIVISOR 2 /* windows of half a second */
-#define STALL_SECONDS  1 /* a gap longer than this restarts the window */
+#define WINDOW_DIVISOR 2
+#define STALL_SECONDS  1
 
 FeedRate feed_rate_create(float nominal, uint32_t tick_hz)
 {

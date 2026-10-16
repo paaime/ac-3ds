@@ -14,7 +14,7 @@ AudioPacer audio_pacer_advance_to(AudioPacer p, uint64_t due_frames)
     if (due_frames > next.due) {
         next.due = due_frames;
     }
-    uint64_t max_lag = next.sample_rate; /* one second */
+    uint64_t max_lag = next.sample_rate;
     if (next.due > next.produced && next.due - next.produced > max_lag) {
         next.produced = next.due - next.sample_rate / RESYNC_OWED_DIVISOR;
     }

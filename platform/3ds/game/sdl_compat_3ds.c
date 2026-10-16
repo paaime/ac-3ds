@@ -1,4 +1,3 @@
-/* sdl_compat_3ds.c - SDL mutex and delay on libctru (include/sdl_compat/SDL.h). */
 #include <3ds.h>
 #include <stdlib.h>
 

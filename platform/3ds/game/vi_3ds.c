@@ -1,6 +1,3 @@
-/* vi_3ds.c - video interface and the game's frame hooks on 3DS (replaces
- * pc/src/pc_vi.c, and pc_gx_begin_frame from pc/src/pc_gx.c). C3D_FrameBegin
- * paces frames at 60 Hz, the GC's NTSC rate, so there is no frame limiter. */
 #include "pc_platform.h"
 
 #include "acres_3ds.h"
@@ -15,7 +12,7 @@
 #include "weeds_3ds.h"
 #include "vi_3ds.h"
 
-#define FRAME_RATE_HZ 60
+#define FRAME_RATE_HZ 60 /* the GC's NTSC rate; C3D_FrameBegin paces frames, so no limiter */
 
 u32 g_frame_limiter = FRAME_RATE_HZ;
 u32 pc_frame_counter = 0;
@@ -26,9 +23,6 @@ static Emu64FrameCounts s_last_emu64;
 static void* s_pre_retrace_callback;
 static void* s_post_retrace_callback;
 
-/* ---- frame hooks ------------------------------------------------------------ */
-
-/* Called by JW_BeginFrame (jsyswrap.cpp). */
 void pc_gx_begin_frame(void)
 {
     pc_emu64_frame_cmds = 0;
@@ -41,7 +35,7 @@ void pc_gx_begin_frame(void)
     pc_gx_draw_call_count = 0;
     g_pc_widescreen_stretch = 0;
     static uint32_t frames_begun;
-    trace3ds_frame(++frames_begun); /* drawn frames, from 1 */
+    trace3ds_frame(++frames_begun);
     frame3ds_begin();
 }
 
@@ -63,7 +57,7 @@ void VIWaitForRetrace(void)
     if (!pc_platform_poll_events()) {
         g_pc_running = 0;
     }
-    os3ds_clock_frame(); /* after a sleep inside aptMainLoop: the town's clock catches up */
+    os3ds_clock_frame(); /* after aptMainLoop, where the console may sleep: catch up with the RTC */
     trace3ds_mark("between frames: sound, test hooks, status");
     audio3ds_frame();
     test_flags_frame();
@@ -79,8 +73,6 @@ void VIWaitForRetrace(void)
     prof3ds_frame();
     trace3ds_mark("game: logic between frames");
 }
-
-/* ---- VI ----------------------------------------------------------------------- */
 
 void VIInit(void) {}
 
@@ -126,7 +118,6 @@ u32 VIGetCurrentLine(void)
     return 0;
 }
 
-/* Stored but never called, as on PC. */
 void* VISetPreRetraceCallback(void* cb)
 {
     void* old = s_pre_retrace_callback;

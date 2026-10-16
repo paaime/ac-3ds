@@ -1,4 +1,3 @@
-/* Host tests for pot_pad.c. */
 #include "pot_pad.h"
 
 #include <stdio.h>
@@ -34,7 +33,7 @@ static void test_pad_replicates_edges(void)
     uint32_t src[W * H];
     uint32_t dst[PW * PH];
     for (uint32_t i = 0; i < W * H; i++) {
-        src[i] = 0x01000000u * (i % W) + i / W; /* encodes (x, y) */
+        src[i] = 0x01000000u * (i % W) + i / W;
     }
 
     CHECK(pot_pad_rgba8_wrap(dst, src, W, H, POT_PAD_EDGE, POT_PAD_EDGE));
@@ -79,13 +78,13 @@ static void test_rejects_invalid_arguments(void)
 
 static void test_axis_plans(void)
 {
-    PotPadAxis a = pot_pad_axis(4, POT_PAD_REPEAT); /* small power of two: tiled copies */
+    PotPadAxis a = pot_pad_axis(4, POT_PAD_REPEAT);
     CHECK(a.padded == 8 && !a.stretch && a.uv_scale == 0.5f);
-    a = pot_pad_axis(48, POT_PAD_REPEAT); /* not a power of two: stretched over 64 */
+    a = pot_pad_axis(48, POT_PAD_REPEAT);
     CHECK(a.padded == 64 && a.stretch && a.uv_scale == 1.0f);
-    a = pot_pad_axis(48, POT_PAD_EDGE); /* clamped: edge padding */
+    a = pot_pad_axis(48, POT_PAD_EDGE);
     CHECK(a.padded == 64 && !a.stretch && a.uv_scale == 48.0f / 64.0f);
-    a = pot_pad_axis(32, POT_PAD_MIRROR); /* no padding needed */
+    a = pot_pad_axis(32, POT_PAD_MIRROR);
     CHECK(a.padded == 32 && !a.stretch && a.uv_scale == 1.0f);
     a = pot_pad_axis(0, POT_PAD_REPEAT);
     CHECK(a.padded == 0);
@@ -100,19 +99,19 @@ static void test_effective_wrap_only_matters_when_padded(void)
 
 static void test_repeat_tiles_small_textures(void)
 {
-    const uint32_t src[4] = { 1, 2, 3, 4 }; /* 4 x 1 */
+    const uint32_t src[4] = { 1, 2, 3, 4 };
     uint32_t dst[8 * 8];
     CHECK(pot_pad_rgba8_wrap(dst, src, 4, 1, POT_PAD_REPEAT, POT_PAD_EDGE));
     const uint32_t row[8] = { 1, 2, 3, 4, 1, 2, 3, 4 };
     for (int x = 0; x < 8; x++) {
         CHECK(dst[x] == row[x]);
-        CHECK(dst[7 * 8 + x] == row[x]); /* edge-padded rows repeat row 0 */
+        CHECK(dst[7 * 8 + x] == row[x]);
     }
 }
 
 static void test_mirror_alternates_copies(void)
 {
-    const uint32_t src[2] = { 5, 6 }; /* 1 x 2 */
+    const uint32_t src[2] = { 5, 6 };
     uint32_t dst[8 * 8];
     CHECK(pot_pad_rgba8_wrap(dst, src, 1, 2, POT_PAD_EDGE, POT_PAD_MIRROR));
     const uint32_t col[8] = { 5, 6, 6, 5, 5, 6, 6, 5 };
@@ -124,16 +123,16 @@ static void test_mirror_alternates_copies(void)
 
 static void test_stretch_resamples_non_power_of_two(void)
 {
-    uint32_t src[12]; /* 12 x 1 -> 16 */
+    uint32_t src[12];
     for (int i = 0; i < 12; i++) {
         src[i] = (uint32_t)i;
     }
     uint32_t dst[16 * 8];
     CHECK(pot_pad_rgba8_wrap(dst, src, 12, 1, POT_PAD_REPEAT, POT_PAD_EDGE));
     CHECK(dst[0] == 0);
-    CHECK(dst[15] == 11);               /* the last texel ends the period */
+    CHECK(dst[15] == 11);
     for (int x = 1; x < 16; x++) {
-        CHECK(dst[x] >= dst[x - 1]);    /* nearest resampling keeps the order */
+        CHECK(dst[x] >= dst[x - 1]);
     }
 }
 

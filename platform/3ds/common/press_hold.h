@@ -1,9 +1,6 @@
 #ifndef AC3DS_PRESS_HOLD_H
 #define AC3DS_PRESS_HOLD_H
 
-/* A button that means one thing tapped and another held. A tap counts on
- * release; a hold fires once, while held, and its release does nothing. */
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -15,7 +12,7 @@ typedef enum {
 
 typedef struct {
     bool active;
-    bool fired; /* already counted as a hold */
+    bool fired;
     uint64_t start_ms;
 } PressHold;
 

@@ -29,9 +29,6 @@
 #include <stdio.h>
 #endif
 
-/* The PC port's title menu (Start Game, Options, Quit Game). The 3DS keeps the
- * GameCube's blinking PRESS START: HOME closes the game there, and the port's
- * options are on the bottom screen. */
 #if defined(PC_ENHANCEMENTS) && !defined(TARGET_3DS)
 #define aAL_PC_TITLE_MENU
 #endif

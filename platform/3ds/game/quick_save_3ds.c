@@ -1,8 +1,3 @@
-/* quick_save_3ds.c - the bottom screen's Save button (see quick_save_3ds.h).
- * Never saves the town in place: only leaving it puts what its actors hold back
- * in the town's data (restore_fgdata_all). So the button makes the gyroid's scene
- * change to the save room, which sends the player back to where they stood
- * (ac_npc_restart_schedule.c_inc, TARGET_3DS). */
 #include "pc_platform.h"
 
 #include <string.h>
@@ -34,7 +29,6 @@ static struct {
     u8 direction;
 } s_return;
 
-/* The player's own house, as the gyroid checks (aHNW_set_save_permission). */
 static mHm_hs_c* own_house(void)
 {
     u32 player_no = Common_Get(player_no);
@@ -63,7 +57,7 @@ static QuickSaveCheck read_check(GAME_PLAY* play)
     }
     c.first_intro = mEv_CheckFirstIntro() != FALSE;
     c.title_demo = mEv_CheckTitleDemo() > 0;
-    c.fading = play->fb_wipe_mode != WIPE_MODE_NONE || play->fb_fade_type != FADE_TYPE_NONE; /* as START */
+    c.fading = play->fb_wipe_mode != WIPE_MODE_NONE || play->fb_fade_type != FADE_TYPE_NONE;
     c.reset_pending = Common_Get(reset_flag) != FALSE;
     c.menu_open = play->submenu.process_status != mSM_PROCESS_WAIT || play->submenu.start_refuse ||
                   play->submenu.start_refuse_timer != 0;
@@ -80,6 +74,7 @@ bool quick_save3ds_available(void)
     return play != NULL && quick_save_allowed(read_check(play));
 }
 
+/* Never save the town in place (actors hold objects out of its data until it's left): go through the gyroid. */
 bool quick_save3ds_start(void)
 {
     // clang-format off
@@ -100,7 +95,7 @@ bool quick_save3ds_start(void)
     mBGMPsComp_make_ps_wipe(DOOR_BGM_FADE); /* without it the scene change waits ~2 s for the music */
     Common_Get(transition).wipe_type = SAVE_WIPE;
     play->fb_fade_type = FADE_TYPE_DEMO;
-    own_house()->flags.has_saved = TRUE; /* as the gyroid (aHNW_set_save_permission) */
+    own_house()->flags.has_saved = TRUE;
     s_return.pending = true;
     s_return.x = (s16)pos.x;
     s_return.y = (s16)pos.y;

@@ -31,9 +31,7 @@ PicaRect gx_screen_to_pica(GxScreenRect r, GxScreenTarget t)
     float x1 = clamp01((r.left + r.width) / t.efb_width);
     float y0 = clamp01(r.top / t.efb_height);
     float y1 = clamp01((r.top + r.height) / t.efb_height);
-    /* EFB fractions -> landscape screen pixels in the image area, then
-     * screen y (down) -> viewport x from the top edge at fb_width,
-     * screen x (right) -> viewport y from the left edge at fb_height */
+    /* Portrait target: screen y runs down from viewport x = fb_width, screen x right from y = fb_height. */
     float sx0 = t.image_x + x0 * t.image_w;
     float sx1 = t.image_x + x1 * t.image_w;
     float sy0 = t.image_y + y0 * t.image_h;
@@ -56,8 +54,6 @@ GxViewportFold gx_screen_viewport_fold(GxScreenRect v, GxScreenTarget t)
 {
     float centre_x = v.left + v.width * 0.5f;
     float centre_y = v.top + v.height * 0.5f;
-    /* the viewport within the EFB's clip space, then the EFB within the
-     * screen's: scaled to the image area and moved to its centre */
     float kx = t.image_w / (float)t.fb_height;
     float ky = t.image_h / (float)t.fb_width;
     float cx = 2.0f * (t.image_x + t.image_w * 0.5f) / (float)t.fb_height - 1.0f;
@@ -66,7 +62,7 @@ GxViewportFold gx_screen_viewport_fold(GxScreenRect v, GxScreenTarget t)
         kx * (v.width / t.efb_width),
         kx * (2.0f * centre_x / t.efb_width - 1.0f) + cx,
         ky * (v.height / t.efb_height),
-        ky * (1.0f - 2.0f * centre_y / t.efb_height) + cy, /* EFB y runs down, NDC y up */
+        ky * (1.0f - 2.0f * centre_y / t.efb_height) + cy,
         1.0f,
     };
     return f;
@@ -96,7 +92,7 @@ float gx_screen_projection_widen(GxWideMark mark, bool orthographic, float facto
 
 GxScreenRect gx_screen_ui_viewport(GxScreenRect v, float factor, float efb_width, float efb_height)
 {
-    /* the whole EFB, give or take a pixel's rounding, as the PC port tests it */
+    /* the whole EFB within a pixel's rounding, as the PC port tests it */
     bool whole = v.left < 1.0f && v.top < 1.0f && v.width > efb_width - 1.0f && v.height > efb_height - 1.0f;
     if (!whole) {
         v.left = (1.0f - factor) * 0.5f * efb_width + v.left * factor;

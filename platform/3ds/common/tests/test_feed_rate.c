@@ -1,4 +1,3 @@
-/* Host tests for feed_rate.c. */
 #include "feed_rate.h"
 
 #include <math.h>
@@ -15,7 +14,7 @@ static int failures = 0;
         }                                                                   \
     } while (0)
 
-#define HZ      1000000u /* ticks per second */
+#define HZ      1000000u
 #define NOMINAL 27965.0f
 
 static FeedRate feed(FeedRate r, uint32_t frames_per_call, uint32_t calls_per_second, int seconds)
@@ -36,16 +35,16 @@ static void test_starts_at_nominal(void)
 static void test_follows_the_measured_rate(void)
 {
     FeedRate r = feed_rate_create(NOMINAL, HZ);
-    r = feed(r, 465, 60, 3); /* 27,900 frames per second */
+    r = feed(r, 465, 60, 3);
     CHECK(fabsf(feed_rate_value(r) - 27900.0f) < 50.0f);
 }
 
 static void test_slow_feed_slows_down_but_is_clamped(void)
 {
     FeedRate r = feed_rate_create(NOMINAL, HZ);
-    r = feed(r, 465, 15, 3); /* a quarter speed */
+    r = feed(r, 465, 15, 3);
     CHECK(fabsf(feed_rate_value(r) - NOMINAL * FEED_RATE_MIN_RATIO) < 1.0f);
-    r = feed(r, 465 * 8, 60, 3); /* far too fast */
+    r = feed(r, 465 * 8, 60, 3);
     CHECK(fabsf(feed_rate_value(r) - NOMINAL * FEED_RATE_MAX_RATIO) < 1.0f);
 }
 
@@ -54,7 +53,7 @@ static void test_a_stall_restarts_the_window(void)
     FeedRate r = feed_rate_create(NOMINAL, HZ);
     r = feed(r, 465, 60, 2);
     float before = feed_rate_value(r);
-    r = feed_rate_add(r, 465, r.last_tick + 5ull * HZ); /* 5 s pause (loading, HOME menu) */
+    r = feed_rate_add(r, 465, r.last_tick + 5ull * HZ);
     CHECK(feed_rate_value(r) == before);
 }
 

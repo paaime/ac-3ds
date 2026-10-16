@@ -1,4 +1,3 @@
-/* texdump_3ds.c - the texture dump (see texdump_3ds.h). */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,8 +7,8 @@
 #include "texdump_3ds.h"
 #include "tga.h"
 
-#define DUMP_DIR      "dump" /* in the cwd, the data folder */
-#define SEEN_SLOTS    8192u  /* a power of two: textures already saved this session */
+#define DUMP_DIR      "dump"
+#define SEEN_SLOTS    8192u /* a power of two */
 #define SEEN_MAX      (SEEN_SLOTS * 3u / 4u)
 #define NAME_CHARS    64
 #define KEY_MIX       0x9E3779B1u
@@ -20,7 +19,7 @@ static struct {
     bool failure_logged;
     uint32_t saved;
     uint32_t seen_count;
-    uint64_t seen[SEEN_SLOTS]; /* 0: empty */
+    uint64_t seen[SEEN_SLOTS];
 } D;
 
 /* Address, palette, size, format and content: a refilled buffer is another texture. */
@@ -32,7 +31,6 @@ static uint64_t key_of(const GxtcDumpInfo* t)
     return key != 0 ? key : 1;
 }
 
-/* The key's slot: where it is, or the empty one where it would go. */
 static uint32_t slot_of(uint64_t key)
 {
     uint32_t i = (uint32_t)(key ^ (key >> 29) ^ (key >> 7)) & (SEEN_SLOTS - 1u);
@@ -64,7 +62,7 @@ static bool write_file(const char* name, const uint8_t* file, size_t size)
     bool ok = fwrite(file, 1, size, f) == size;
     ok = fclose(f) == 0 && ok;
     if (!ok) {
-        remove(name); /* no half file */
+        remove(name);
     }
     return ok;
 }
@@ -82,7 +80,7 @@ static void save(const GxtcDumpInfo* t, const uint32_t* texels)
     free(file);
     if (ok) {
         uint64_t key = key_of(t);
-        D.seen[slot_of(key)] = key; /* only once it's on the card: a failed one is tried again later */
+        D.seen[slot_of(key)] = key; /* only once on the card: a failed one is tried again later */
         D.seen_count++;
         D.saved++;
     } else if (!D.failure_logged) {
@@ -98,7 +96,7 @@ void texdump3ds_enable(bool on)
     }
     D.on = on;
     if (on) {
-        mkdir(DUMP_DIR, 0777); /* already there is fine */
+        mkdir(DUMP_DIR, 0777);
         fprintf(stderr, "[dump] saving each texture used to %s/\n", DUMP_DIR);
     } else {
         fprintf(stderr, "[dump] stopped: %lu textures saved\n", (unsigned long)D.saved);

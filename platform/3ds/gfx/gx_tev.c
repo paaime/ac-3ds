@@ -2,19 +2,17 @@
 
 #include <string.h>
 
-/* ---- terms: a resolved GX input ---------------------------------------------- */
-
 typedef enum {
     TERM_ZERO,
-    TERM_SRC,   /* a PICA source (primary colour, texture, previous stage) */
-    TERM_CONST, /* a constant colour: needs the stage constant or the buffer colour */
+    TERM_SRC,
+    TERM_CONST,
 } TermKind;
 
 typedef struct {
     TermKind kind;
-    uint8_t src;     /* TERM_SRC: PICA_SRC_* */
-    bool read_alpha; /* TERM_SRC in the colour channel: replicate the source's alpha */
-    uint32_t value;  /* TERM_CONST: 0xRRGGBBAA (colour channel: rgb; alpha channel: a) */
+    uint8_t src;
+    bool read_alpha;
+    uint32_t value; /* 0xRRGGBBAA */
 } Term;
 
 typedef struct {
@@ -28,10 +26,9 @@ typedef struct {
 typedef struct {
     AbstractOp ops[MAX_OPS_PER_CHANNEL];
     int count;
-    uint8_t scale; /* PICA_SCALE_*, applied to the last op */
+    uint8_t scale; /* applied to the last op */
 } ChannelProgram;
 
-/* Constant slots of one PICA stage (or of the global buffer colour). */
 typedef struct {
     bool rgb_set;
     bool alpha_set;
@@ -78,8 +75,6 @@ static uint32_t fraction(uint32_t eighths)
     return (v << 24) | (v << 16) | (v << 8) | v;
 }
 
-/* ---- konst selectors --------------------------------------------------------- */
-
 #define KSEL_FRACTION_LAST 0x07
 #define KSEL_K0            0x0C
 #define KSEL_K0_R          0x10
@@ -119,14 +114,12 @@ uint32_t gx_tev_konst_color(const GxTevConfig* gx, uint8_t sel)
 
 uint32_t gx_tev_konst_alpha(const GxTevConfig* gx, uint8_t sel)
 {
-    /* Alpha selectors share the colour numbering, minus the full-colour K0..K3. */
+    /* Alpha selectors share the colour numbering, without the full-colour K0..K3. */
     if (sel >= KSEL_K0 && sel < KSEL_K0_R) {
         return fraction(8u);
     }
     return replicate_alpha(gx_tev_konst_color(gx, sel));
 }
-
-/* ---- input resolution --------------------------------------------------------- */
 
 static bool assign_texture_unit(Translator* tr, const GxTevStage* s, Term* t, bool read_alpha)
 {
@@ -151,7 +144,7 @@ static Term prev_term(const Translator* tr, bool has_previous, bool read_alpha)
     if (has_previous) {
         return term_src(PICA_SRC_PREVIOUS, read_alpha);
     }
-    /* No earlier PICA stage: PREV still holds its initial register value. */
+    /* Before any PICA stage, PREV still holds its GXSetTevColor value. */
     uint32_t reg = tr->gx->reg[GXT_REG_PREV];
     return term_const(read_alpha ? replicate_alpha(reg) : reg);
 }
@@ -195,8 +188,6 @@ static bool alpha_term(Translator* tr, const GxTevStage* s, uint8_t arg, bool ha
     default: tr->reason = "unknown alpha input"; return false;
     }
 }
-
-/* ---- term algebra -------------------------------------------------------------- */
 
 static uint32_t relevant(uint32_t value, bool alpha_channel)
 {
@@ -252,15 +243,15 @@ static AbstractOp op3(uint8_t func, Term a, Term b, Term c)
 }
 
 typedef enum {
-    LERP_ZERO,    /* 0 */
-    LERP_SINGLE,  /* x */
-    LERP_PRODUCT, /* x * y (y possibly one-minus) */
-    LERP_GENERAL, /* a*(1-c) + b*c */
+    LERP_ZERO,
+    LERP_SINGLE,
+    LERP_PRODUCT,
+    LERP_GENERAL,
 } LerpShape;
 
 typedef struct {
     LerpShape shape;
-    AbstractOp op; /* how to compute the lerp in one PICA op */
+    AbstractOp op;
 } Lerp;
 
 static Lerp classify_lerp(const Term in[4], bool alpha_channel)
@@ -302,10 +293,8 @@ static int operand_count(uint8_t func)
 
 static bool is_constant(const Term* t)
 {
-    return t->kind == TERM_CONST || t->kind == TERM_ZERO; /* zero is emitted as constant 0 */
+    return t->kind == TERM_CONST || t->kind == TERM_ZERO;
 }
-
-/* ---- constant folding: all-constant ops are computed once, on the CPU ---- */
 
 static float component(const Term* t, int shift)
 {
@@ -342,7 +331,6 @@ static bool all_constant(const AbstractOp* op)
     return true;
 }
 
-/* Value of an all-constant op, as an 8-bit constant (the hardware precision). */
 static Term folded(const AbstractOp* op, bool alpha_channel)
 {
     uint32_t value = 0;
@@ -353,9 +341,7 @@ static Term folded(const AbstractOp* op, bool alpha_channel)
     return term_const(value);
 }
 
-/* Folds leading all-constant ops into the next op's PREVIOUS operands. This
- * removes any op with three distinct constants (a stage reaches only two).
- * keep_last: leave the final ADD that bias -1/2 turns into ADD_SIGNED. */
+/* keep_last keeps the final ADD that bias -1/2 turns into ADD_SIGNED. */
 static void fold_constants(ChannelProgram* prog, bool alpha_channel, bool keep_last)
 {
     while (all_constant(&prog->ops[0]) && prog->ops[0].func != PICA_FUNC_REPLACE &&
@@ -379,9 +365,7 @@ static void fold_constants(ChannelProgram* prog, bool alpha_channel, bool keep_l
     }
 }
 
-/* d + lerp(a, b, c) when d is PREVIOUS ("lerp, then add d" would overwrite d):
- * (d + a*(1-c)) + b*c as two MULTIPLY_ADDs (or a and b swapped), exact under
- * the per-stage clamp as both terms are >= 0. The second op must not read PREVIOUS. */
+/* d is PREVIOUS, which a lerp computed first would overwrite: (d + a*(1-c)) + b*c, exact as both terms >= 0. */
 static bool lerp_onto_previous(const Term in[4], ChannelProgram* prog)
 {
     const Term* a = &in[0];
@@ -427,7 +411,7 @@ static bool build_channel(Translator* tr, const GxTevChannel* ch, const Term in[
     prog->scale = SCALES[ch->scale];
 
     if (l.shape == LERP_ZERO) {
-        prog->ops[0] = op1(PICA_FUNC_REPLACE, d_zero ? term_zero() : *d); /* d +/- 0 */
+        prog->ops[0] = op1(PICA_FUNC_REPLACE, d_zero ? term_zero() : *d);
     } else if (ch->op == GXT_OP_ADD && d_zero) {
         prog->ops[0] = l.op;
     } else if (ch->op == GXT_OP_ADD && l.shape == LERP_SINGLE) {
@@ -449,7 +433,6 @@ static bool build_channel(Translator* tr, const GxTevChannel* ch, const Term in[
             return false;
         }
     } else {
-        /* Two ops: compute the lerp, then combine it (now PREVIOUS) with d. */
         prog->count = 2;
         prog->ops[0] = l.op;
         prog->ops[1] = ch->op == GXT_OP_SUB ? op2(PICA_FUNC_SUBTRACT, *d, term_src(PICA_SRC_PREVIOUS, false))
@@ -467,8 +450,6 @@ static bool build_channel(Translator* tr, const GxTevChannel* ch, const Term in[
     }
     return true;
 }
-
-/* ---- constant allocation and PICA op emission ------------------------------------ */
 
 static bool slot_take(ConstSlot* slot, uint32_t value, bool alpha_channel)
 {
@@ -519,7 +500,7 @@ static bool emit_op(Translator* tr, ConstSlot* stage_const, const AbstractOp* a,
                                                    a->func == PICA_FUNC_MULTIPLY_ADD ? 3 : 2);
     for (int k = 0; k < 3; k++) {
         if (k >= used) {
-            out->src[k] = PICA_SRC_PREVIOUS; /* unused operand: any source */
+            out->src[k] = PICA_SRC_PREVIOUS;
             out->op[k] = alpha_channel ? PICA_OP_A_ALPHA : PICA_OP_RGB_COLOR;
             continue;
         }
@@ -583,9 +564,7 @@ static bool stage_reads_buffer(const PicaCombinerStage* st)
     return false;
 }
 
-/* The combiner buffer lags one stage: stage 0 reads it as 0 (Azahar's
- * sw_rasterizer.cpp, from hardware tests). If the first stage needs it, the
- * program moves down behind a pass-through stage, free as all six always run. */
+/* The PICA combiner buffer lags one stage (stage 0 reads 0): move its users behind a pass-through stage. */
 static bool keep_buffer_out_of_stage0(Translator* tr)
 {
     PicaCombiner* out = tr->out;

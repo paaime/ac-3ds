@@ -1,4 +1,3 @@
-/* Host tests for pcm_level.c. */
 #include "pcm_level.h"
 
 #include <stdio.h>
@@ -38,7 +37,7 @@ static void test_percent_of_full_scale(void)
     CHECK(pcm_peak_percent(0) == 0);
     CHECK(pcm_peak_percent(32768) == 100);
     CHECK(pcm_peak_percent(16384) == 50);
-    CHECK(pcm_peak_percent(1) == 1); /* any signal shows */
+    CHECK(pcm_peak_percent(1) == 1);
 }
 
 int main(void)

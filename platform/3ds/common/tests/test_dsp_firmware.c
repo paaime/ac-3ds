@@ -1,4 +1,3 @@
-/* Host tests for dsp_firmware.c. */
 #include "dsp_firmware.h"
 
 #include <stdio.h>
@@ -17,7 +16,6 @@ static int failures = 0;
 
 #define IMAGE_BYTES 0x400
 
-/* A header-only stand-in: the signature area, "DSP1", then the size. */
 static void make_image(uint8_t* img, uint32_t declared)
 {
     memset(img, 0, IMAGE_BYTES);

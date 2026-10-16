@@ -1,5 +1,3 @@
-/* bottom_ui_3ds.c - the bottom screen's picture (see bottom_ui_3ds.h), drawn
- * the way the game draws its menus, in their 320 x 240 units (1:1 here). */
 #include "pc_platform.h"
 
 #include <stdio.h>
@@ -17,20 +15,20 @@
 #include "gc_pattern.h"
 #include "town_map_3ds.h"
 
-#define TEX_DIM          8    /* texels */
-#define CHECKER_CELL     4    /* texels per cell */
+#define TEX_DIM          8
+#define CHECKER_CELL     4
 #define PX_PER_TEXEL     4
 #define RECT_SUBPIXELS   4    /* texture rectangles take 10.2 fixed point */
 #define TEXEL_STEP_ONE   1024 /* one texel per pixel, 5.10 */
 #define ICON_TEXELS      32
 #define ICON_TLUT        15
 #define ICON_TLUT_SIZE   16
-#define DISC_DIM         32   /* texels */
-#define ARROW_DIM        16   /* texels */
+#define DISC_DIM         32
+#define ARROW_DIM        16
 #define ARROW_PX         20.0f
 #define FULL             255
 #define LABEL_SCALE_MAX  0.7f
-#define TEXT_SCALE       1.0f  /* smaller, the 4-bit glyphs alias */
+#define TEXT_SCALE       1.0f /* smaller, the 4-bit glyphs alias */
 #define NOTE_SCALE       0.75f
 #define ROW_TEXT_X       8.0f
 #define ROW_LABEL_Y      3.0f
@@ -38,10 +36,10 @@
 #define PILL_W           54.0f
 #define PILL_H           22.0f
 #define PILL_INSET       6.0f
-#define PILL_TEXT_MARGIN 6.0f /* a value's text keeps this much of the pill free */
+#define PILL_TEXT_MARGIN 6.0f
 #define TEXT_GAP         4.0f
 #define BORDER           1.0f
-#define FONT_LINE_H      16.0f /* mFont_TEX_CHAR_HEIGHT at scale 1 */
+#define FONT_LINE_H      16.0f
 /* Name plate model (con_kaiwaname_v) extent, menu units from the window centre, y up. */
 #define PLATE_LEFT       -112.0f
 #define PLATE_RIGHT      -14.0f
@@ -62,14 +60,12 @@ static const Rgba k_row = { 255, 251, 238, FULL };
 static const Rgba k_row_edge = { 214, 176, 124, FULL };
 static const Rgba k_pill_on = { 112, 188, 92, FULL };
 static const Rgba k_pill_off = { 186, 176, 166, FULL };
-static const Rgba k_pill_choice = { 110, 138, 222, FULL }; /* a two-way choice, neither "off" */
-static const Rgba k_plate = { 70, 245, 255, FULL };       /* a male villager's name plate (m_msg_appear.c_inc) */
+static const Rgba k_pill_choice = { 110, 138, 222, FULL };
+static const Rgba k_plate = { 70, 245, 255, FULL }; /* a male villager's name plate (m_msg_appear.c_inc) */
 static const Rgba k_plate_text = { 0, 0, 15, FULL };
 
-/* src/game/m_msg.c, TARGET_3DS. */
 extern void mMsg_3ds_draw_nameplate(GRAPH* graph, u8 r, u8 g, u8 b);
 
-/* Notebook and gyroid icons (src/data/model/inv_mwin_*.c), loaded from the disc. */
 extern u16 inv_mwin_nittki_pal[];
 extern u8 inv_mwin_nittki_tex[];
 extern u16 inv_mwin_haniwa_pal[];
@@ -92,8 +88,6 @@ void bottom_ui_init(void)
     gc_arrow_rgb5a3(s_arrow_down, sizeof(s_arrow_down), ARROW_DIM, false, k_pill_choice.r, k_pill_choice.g,
                     k_pill_choice.b);
 }
-
-/* ---- drawing primitives -------------------------------------------------- */
 
 static int sub(float px)
 {
@@ -173,7 +167,6 @@ static void disc(GRAPH* graph, PxRect r)
     soft_texture(graph, r, s_disc, DISC_DIM);
 }
 
-/* As mSM_set_dl_item draws an item. */
 static void icon(GRAPH* graph, PxRect r, u16* palette, u8* texture)
 {
     int step = (int)(TEXEL_STEP_ONE * ICON_TEXELS / r.w);
@@ -205,7 +198,6 @@ static float text_width(const char* s, float scale)
     return mFont_GetStringWidth((u8*)s, (int)strlen(s), TRUE) * scale;
 }
 
-/* The largest scale up to `scale` at which `s` fits in `width`. */
 static float fitting(const char* s, float scale, float width)
 {
     float w = text_width(s, scale);
@@ -224,8 +216,6 @@ static void text_centred(GAME* game, const char* s, PxRect r, float scale, Rgba 
     float y = r.y + (r.h - FONT_LINE_H * scale) / 2;
     text(game, s, x, y, scale, c);
 }
-
-/* ---- the screen ------------------------------------------------------------ */
 
 static void button_label(GAME* game, BottomButton b, const char* label, Rgba c)
 {
@@ -291,7 +281,6 @@ static void draw_pager(GAME* game, int sheet, int sheets)
     text_centred(game, label, room, fitting(label, NOTE_SCALE, room.w), k_note);
 }
 
-/* (x, y) is the plate's top-left; the menus' view is centred, y up, in MENU_UNIT model units. */
 static void name_plate(GAME* game, const char* label, float x, float y)
 {
     GRAPH* graph = game->graph;
@@ -329,7 +318,7 @@ static void draw_options(GAME* game, Settings s, SettingsPage page, int sheet)
         draw_pager(game, sheet, sheets);
     }
     int pages = settings_page_count(AC3DS_DEBUG);
-    for (int p = 0; pages > 1 && p < pages; p++) { /* player build: one page, no tabs */
+    for (int p = 0; pages > 1 && p < pages; p++) {
         PxRect tab = bottom_layout_page_tab(p, pages);
         bool open = p == (int)page;
         if (open) {

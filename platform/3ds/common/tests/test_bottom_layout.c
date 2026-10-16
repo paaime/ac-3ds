@@ -1,4 +1,3 @@
-/* Host tests for bottom_layout.c. */
 #include "bottom_layout.h"
 
 #include <math.h>
@@ -35,9 +34,6 @@ static PxRect screen(void)
     return s;
 }
 
-/* Two round buttons in the top-right corner, Save then Options: each with
- * its icon, the label under it, the disc that rings the icon when its page
- * is open. */
 static void test_the_corner_buttons(void)
 {
     for (int i = 0; i < BOTTOM_BUTTON_COUNT; i++) {
@@ -50,24 +46,22 @@ static void test_the_corner_buttons(void)
         CHECK(b.y < 8 && b.x > BOTTOM_SCREEN_W / 2 && b.y + b.h < BOTTOM_SCREEN_H / 4);
         CHECK(inside(icon, b) && inside(label, b));
         CHECK(!overlap(icon, label));
-        CHECK(label.y >= icon.y + icon.h);                          /* the label under the icon */
-        CHECK(NEAR_EQ(icon.x + icon.w / 2, b.x + b.w / 2));         /* both centred */
+        CHECK(label.y >= icon.y + icon.h);
+        CHECK(NEAR_EQ(icon.x + icon.w / 2, b.x + b.w / 2));
         CHECK(NEAR_EQ(label.x + label.w / 2, b.x + b.w / 2));
         CHECK(NEAR_EQ(icon.w, BOTTOM_ICON_SIZE) && NEAR_EQ(icon.h, BOTTOM_ICON_SIZE));
-        CHECK(inside(icon, glow) && glow.w > icon.w);               /* the highlight rings the icon */
+        CHECK(inside(icon, glow) && glow.w > icon.w);
         CHECK(NEAR_EQ(glow.x + glow.w / 2, icon.x + icon.w / 2) && NEAR_EQ(glow.y + glow.h / 2, icon.y + icon.h / 2));
         CHECK(inside(glow, screen()));
     }
     PxRect save = bottom_layout_button(BOTTOM_BUTTON_SAVE);
     PxRect options = bottom_layout_button(BOTTOM_BUTTON_OPTIONS);
-    CHECK(options.x + options.w > BOTTOM_SCREEN_W - 8);            /* Options in the corner */
-    CHECK(save.x + save.w <= options.x && NEAR_EQ(save.y, options.y)); /* Save just left of it */
+    CHECK(options.x + options.w > BOTTOM_SCREEN_W - 8);
+    CHECK(save.x + save.w <= options.x && NEAR_EQ(save.y, options.y));
     CHECK(NEAR_EQ(save.w, options.w) && NEAR_EQ(save.h, options.h));
     CHECK(!overlap(save, bottom_layout_grid()));
 }
 
-/* The touch areas reach the screen's top and right edges and meet between
- * the two buttons: the corner is easy to hit. */
 static void test_touching_the_corner_buttons(void)
 {
     PxRect save = bottom_layout_button(BOTTOM_BUTTON_SAVE);
@@ -89,8 +83,6 @@ static void test_touching_the_corner_buttons(void)
     CHECK(bottom_layout_button_at((int)(grid.x + grid.w - 1), (int)grid.y) == BOTTOM_BUTTON_NONE);
 }
 
-/* The map takes the whole screen: the acre grid on the left, full height;
- * the acre's panel on the right, under the button. */
 static void test_the_map_fills_the_screen(void)
 {
     PxRect grid = bottom_layout_grid();
@@ -100,9 +92,9 @@ static void test_the_map_fills_the_screen(void)
     CHECK(inside(grid, screen()) && inside(panel, screen()));
     CHECK(!overlap(grid, panel) && !overlap(grid, b) && !overlap(panel, b) && !overlap(panel, save));
     CHECK(grid.x < panel.x);
-    CHECK(grid.h > BOTTOM_SCREEN_H * 0.9f);                     /* nearly the full height */
+    CHECK(grid.h > BOTTOM_SCREEN_H * 0.9f);
     CHECK(panel.y >= b.y + b.h);
-    CHECK(panel.w > 90 && panel.h > 120);                       /* room for the acre's bubble */
+    CHECK(panel.w > 90 && panel.h > 120);
 }
 
 static void test_option_rows(void)
@@ -115,19 +107,19 @@ static void test_option_rows(void)
     for (int row = 0; row < BOTTOM_LAYOUT_OPTION_ROWS; row++) {
         PxRect r = bottom_layout_option_row(row, false);
         CHECK(inside(r, screen()));
-        CHECK(r.y >= b.y + b.h && r.y >= title.y + title.h);    /* under the button and the title */
+        CHECK(r.y >= b.y + b.h && r.y >= title.y + title.h);
         CHECK(bottom_layout_option_at((int)(r.x + r.w / 2), (int)(r.y + r.h / 2), BOTTOM_LAYOUT_OPTION_ROWS, false) == row);
         if (row > 0) {
             CHECK(!overlap(r, bottom_layout_option_row(row - 1, false)));
         }
     }
     CHECK(bottom_layout_option_row(-1, false).h == 0);
-    CHECK(bottom_layout_option_row(BOTTOM_LAYOUT_OPTION_ROWS - 1, false).h > 0); /* the last row that fits */
-    CHECK(bottom_layout_option_row(BOTTOM_LAYOUT_OPTION_ROWS, false).h == 0);    /* one more doesn't */
-    CHECK(bottom_layout_option_at(160, 10, 5, false) == -1);  /* the title */
-    CHECK(bottom_layout_option_at(1, 100, 5, false) == -1);   /* left of the rows */
+    CHECK(bottom_layout_option_row(BOTTOM_LAYOUT_OPTION_ROWS - 1, false).h > 0);
+    CHECK(bottom_layout_option_row(BOTTOM_LAYOUT_OPTION_ROWS, false).h == 0);
+    CHECK(bottom_layout_option_at(160, 10, 5, false) == -1);
+    CHECK(bottom_layout_option_at(1, 100, 5, false) == -1);
     PxRect last_row = bottom_layout_option_row(BOTTOM_LAYOUT_OPTION_ROWS - 1, false);
-    for (int i = 0; i < 2; i++) {                      /* the page tabs, under the rows */
+    for (int i = 0; i < 2; i++) {
         PxRect tab = bottom_layout_page_tab(i, 2);
         CHECK(inside(tab, screen()));
         CHECK(tab.y >= last_row.y + last_row.h);
@@ -137,16 +129,13 @@ static void test_option_rows(void)
     CHECK(!overlap(bottom_layout_page_tab(0, 2), bottom_layout_page_tab(1, 2)));
     CHECK(bottom_layout_page_tab(0, 2).x < bottom_layout_page_tab(1, 2).x);
     CHECK(NEAR_EQ(bottom_layout_page_tab(0, 2).x + bottom_layout_page_tab(1, 2).x + bottom_layout_page_tab(1, 2).w,
-                  BOTTOM_SCREEN_W)); /* centred */
+                  BOTTOM_SCREEN_W));
     CHECK(bottom_layout_page_tab(2, 2).w == 0 && bottom_layout_page_tab(-1, 2).w == 0);
     CHECK(bottom_layout_page_tab_at(160, 100, 2) == -1);
     PxRect last = bottom_layout_option_row(1, false);
-    CHECK(bottom_layout_option_at(160, (int)(last.y + 2), 1, false) == -1); /* past the last row */
+    CHECK(bottom_layout_option_at(160, (int)(last.y + 2), 1, false) == -1);
 }
 
-/* More settings than rows: the rows narrow for a column on their right with
- * an up arrow (level with the first row), a down arrow (level with the last)
- * and the sheet number between them. */
 static void test_paged_rows_and_the_pager(void)
 {
     PxRect up = bottom_layout_pager_up();
@@ -155,7 +144,7 @@ static void test_paged_rows_and_the_pager(void)
     PxRect first = bottom_layout_option_row(0, true);
     PxRect last = bottom_layout_option_row(BOTTOM_LAYOUT_OPTION_ROWS - 1, true);
     CHECK(inside(up, screen()) && inside(down, screen()) && inside(label, screen()));
-    CHECK(up.x >= first.x + first.w && down.x >= last.x + last.w); /* right of the rows */
+    CHECK(up.x >= first.x + first.w && down.x >= last.x + last.w);
     CHECK(NEAR_EQ(up.y, first.y) && NEAR_EQ(down.y + down.h, last.y + last.h));
     CHECK(label.y >= up.y + up.h && label.y + label.h <= down.y);
     CHECK(!overlap(up, down) && !overlap(up, bottom_layout_button(BOTTOM_BUTTON_OPTIONS)));
@@ -189,14 +178,13 @@ static void test_fit_whole_screen_is_the_menus_view(void)
     UnitBox menus = { -160, 160, -120, 120 };
     UnitBox v = bottom_layout_fit(menus, screen(), BOTTOM_SCREEN_W, BOTTOM_SCREEN_H);
     CHECK(NEAR_EQ(v.left, -160) && NEAR_EQ(v.right, 160) && NEAR_EQ(v.bottom, -120) && NEAR_EQ(v.top, 120));
-    UnitBox window = { -136, 136, -102, 102 }; /* 4:3: fills the screen exactly */
+    UnitBox window = { -136, 136, -102, 102 };
     v = bottom_layout_fit(window, screen(), BOTTOM_SCREEN_W, BOTTOM_SCREEN_H);
     CHECK(NEAR_EQ(v.left, -136) && NEAR_EQ(v.right, 136) && NEAR_EQ(v.bottom, -102) && NEAR_EQ(v.top, 102));
 }
 
 static void test_fit_into_a_rectangle(void)
 {
-    /* 10 x 10 units into a 50 x 50 square at (20, 40): 5 px per unit */
     UnitBox src = { 0, 10, 0, 10 };
     PxRect dst = { 20, 40, 50, 50 };
     UnitBox v = bottom_layout_fit(src, dst, 320, 240);
@@ -206,7 +194,6 @@ static void test_fit_into_a_rectangle(void)
 
 static void test_fit_centres_at_one_scale(void)
 {
-    /* 10 x 10 units into 100 x 50 px: 5 px per unit, 25 px each side */
     UnitBox src = { 0, 10, 0, 10 };
     PxRect dst = { 0, 0, 100, 50 };
     UnitBox v = bottom_layout_fit(src, dst, 320, 240);
@@ -229,9 +216,7 @@ static void test_fit_without_area_gives_the_menus_view(void)
     CHECK(NEAR_EQ(v.left, -160) && NEAR_EQ(v.top, 120));
 }
 
-/* The map menu's tiles (m_map_ovl.c, mMP_set_map_dl): 22 units apart, A-1
- * centred at (11.7, 45.7), rows going down. In the menus' own 1:1 view a
- * pixel is a unit, from the screen's centre. */
+/* m_map_ovl.c's mMP_set_map_dl: tiles 22 units apart, A-1 centred at (11.7, 45.7), rows going down. */
 static void test_the_acre_under_a_touch(void)
 {
     UnitBox menus = { -160, 160, -120, 120 };
@@ -240,17 +225,16 @@ static void test_the_acre_under_a_touch(void)
     CHECK(bottom_layout_acre_at(menus, 172, 74, 5, 6, &col, &row) && col == 0 && row == 0);
     CHECK(bottom_layout_acre_at(menus, 160 + 12 + 22 * 4, 120 - 46 + 22 * 5, 5, 6, &col, &row) && col == 4 &&
           row == 5);
-    CHECK(bottom_layout_acre_at(menus, 161, 74, 5, 6, &col, &row) && col == 0); /* A-1's left edge: unit 0.7 */
+    CHECK(bottom_layout_acre_at(menus, 161, 74, 5, 6, &col, &row) && col == 0);
     CHECK(!bottom_layout_acre_at(menus, 160, 74, 5, 6, &col, &row));
-    CHECK(bottom_layout_acre_at(menus, 270, 74, 5, 6, &col, &row) && col == 4); /* the right edge: 110.7 */
+    CHECK(bottom_layout_acre_at(menus, 270, 74, 5, 6, &col, &row) && col == 4);
     CHECK(!bottom_layout_acre_at(menus, 271, 74, 5, 6, &col, &row));
-    CHECK(bottom_layout_acre_at(menus, 172, 195, 5, 6, &col, &row) && row == 5); /* the bottom: -75.3 */
+    CHECK(bottom_layout_acre_at(menus, 172, 195, 5, 6, &col, &row) && row == 5);
     CHECK(!bottom_layout_acre_at(menus, 172, 196, 5, 6, &col, &row));
-    CHECK(!bottom_layout_acre_at(menus, 172, 63, 5, 6, &col, &row)); /* above A: 56.7 */
+    CHECK(!bottom_layout_acre_at(menus, 172, 63, 5, 6, &col, &row));
     CHECK(!bottom_layout_acre_at(menus, 172, 74, 5, 6, NULL, &row));
 }
 
-/* Each tile's centre, drawn where the grid goes, touches back to its tile. */
 static void test_acres_where_the_grid_is_drawn(void)
 {
     UnitBox grid_box = { -9.0f, 121.0f, -86.0f, 66.0f }; /* town_map_3ds.c */
@@ -264,7 +248,7 @@ static void test_acres_where_the_grid_is_drawn(void)
             int c = -1;
             int r = -1;
             CHECK(bottom_layout_acre_at(v, x, y, 5, 6, &c, &r) && c == col && r == row);
-            CHECK(bottom_layout_button_at(x, y) == BOTTOM_BUTTON_NONE); /* the corner buttons are elsewhere */
+            CHECK(bottom_layout_button_at(x, y) == BOTTOM_BUTTON_NONE);
         }
     }
 }

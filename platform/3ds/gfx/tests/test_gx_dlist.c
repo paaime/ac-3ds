@@ -1,4 +1,3 @@
-/* Host tests for gx_dlist.c. */
 #include "gx_dlist.h"
 
 #include <stdio.h>
@@ -54,7 +53,7 @@ static void test_records_and_replays_in_order(void)
 
 static void test_overflow_returns_zero_bytes(void)
 {
-    uint32_t buf[4]; /* the magic word plus 3 more: too small for a 4-argument command */
+    uint32_t buf[4];
     GxDlRecorder r = gx_dl_begin(buf, sizeof(buf));
     const uint32_t args[4] = { 1, 2, 3, 4 };
     gx_dl_record(&r, 1, args, 4);
@@ -72,7 +71,6 @@ static void test_rejects_too_many_args(void)
 
 static void test_foreign_lists_are_not_replayed(void)
 {
-    /* A real GX display list (or garbage) doesn't start with the magic. */
     const uint32_t foreign[4] = { 0x98000400u, 0, 0, 0 };
     Seen seen = { 0 };
     CHECK(gx_dl_replay(foreign, sizeof(foreign), collect, &seen) == 0);
@@ -89,7 +87,7 @@ static void test_truncated_list_stops_safely(void)
     gx_dl_record(&r, 2, args, 4);
     uint32_t bytes = gx_dl_end(&r);
     Seen seen = { 0 };
-    CHECK(gx_dl_replay(buf, bytes - 4, collect, &seen) == 1); /* the second command is cut */
+    CHECK(gx_dl_replay(buf, bytes - 4, collect, &seen) == 1);
 }
 
 static void test_record_without_begin_fails(void)

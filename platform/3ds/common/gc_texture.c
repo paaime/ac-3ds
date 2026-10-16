@@ -1,5 +1,4 @@
-/* Decoding rules ported texel for texel from ACGC-PC-Port pc/src/pc_gx_texture.c
- * (MIT, (c) 2026 FlyingMeta). */
+/* Decoding rules ported from ACGC-PC-Port pc/src/pc_gx_texture.c (MIT, (c) 2026 FlyingMeta). */
 #include "gc_texture.h"
 
 #include <string.h>
@@ -41,8 +40,6 @@ uint32_t gc_decode_rgb565(uint16_t value)
     return pack(expand((value >> 11) & 0x1F, 31), expand((value >> 5) & 0x3F, 63),
                 expand(value & 0x1F, 31), 255);
 }
-
-/* ---- block geometry ---------------------------------------------------- */
 
 typedef struct {
     uint32_t block_w;
@@ -87,8 +84,6 @@ size_t gc_texture_size(GcTexFormat format, uint32_t width, uint32_t height)
     return blocks_x * blocks_y * shape.block_bytes;
 }
 
-/* ---- palettes ---------------------------------------------------------- */
-
 static void build_palette(const GcPalette* palette, uint32_t colours[GC_PALETTE_MAX_ENTRIES])
 {
     for (uint32_t i = 0; i < GC_PALETTE_MAX_ENTRIES; i++) {
@@ -116,13 +111,11 @@ static void build_palette(const GcPalette* palette, uint32_t colours[GC_PALETTE_
     }
 }
 
-/* ---- per-format block decoders ------------------------------------------ */
-
 typedef struct {
     uint32_t* dst;
     uint32_t width;
     uint32_t height;
-    const uint32_t* palette; /* C4/C8 only */
+    const uint32_t* palette;
 } DecodeTarget;
 
 static void put(const DecodeTarget* t, uint32_t x, uint32_t y, uint32_t texel)
@@ -142,7 +135,7 @@ typedef void (*BlockDecoder)(const DecodeTarget* t, const uint8_t* block, uint32
 static void block_i4(const DecodeTarget* t, const uint8_t* b, uint32_t x0, uint32_t y0)
 {
     for (uint32_t i = 0; i < 64; i++) {
-        uint32_t n = (i & 1) ? (b[i / 2] & 0x0F) : (b[i / 2] >> 4); /* high nibble = left texel */
+        uint32_t n = (i & 1) ? (b[i / 2] & 0x0F) : (b[i / 2] >> 4);
         uint32_t v = nibble_intensity(n);
         put(t, x0 + i % 8, y0 + i / 8, pack(v, v, v, v));
     }
@@ -204,8 +197,8 @@ static void block_rgb5a3(const DecodeTarget* t, const uint8_t* b, uint32_t x0, u
 
 static void block_rgba8(const DecodeTarget* t, const uint8_t* b, uint32_t x0, uint32_t y0)
 {
-    const uint8_t* ar = b;                /* 16 x (alpha, red) */
-    const uint8_t* gb = b + BLOCK_BYTES;  /* 16 x (green, blue) */
+    const uint8_t* ar = b;
+    const uint8_t* gb = b + BLOCK_BYTES;
     for (uint32_t i = 0; i < 16; i++) {
         put(t, x0 + i % 4, y0 + i / 4, pack(ar[i * 2 + 1], gb[i * 2], gb[i * 2 + 1], ar[i * 2]));
     }

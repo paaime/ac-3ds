@@ -1,5 +1,3 @@
-/* backlight_3ds.c - the bottom screen's light (see backlight_3ds.h). The APT
- * hooks run on the game thread. */
 #include <3ds.h>
 #include <signal.h>
 #include <stdio.h>
@@ -13,14 +11,14 @@
 #define TIMEOUT_MS (LIGHT_SAVER_TIMEOUT_S * 1000u)
 
 static struct {
-    bool ready;   /* gsp::Lcd works: off as soon as a call fails */
-    bool lit;     /* as last set */
-    bool started; /* the wait starts at the first scan: boot outlasts it */
+    bool ready;
+    bool lit;
+    bool started;
     LightTimer timer;
     aptHookCookie hook;
 } L;
 
-/* gsp::Lcd is opened per switch, never held: held, it freezes the HOME Menu. */
+/* Open, call, close: a gsp::Lcd session held open froze the HOME Menu. */
 static Result switch_light(bool lit)
 {
     Result r = gspLcdInit();
@@ -50,12 +48,12 @@ static void on_apt(APT_HookType type, void* param)
 {
     (void)param;
     switch (type) {
-        case APTHOOK_ONSUSPEND: /* the HOME Menu gets a lit screen */
+        case APTHOOK_ONSUSPEND:
         case APTHOOK_ONSLEEP:
         case APTHOOK_ONRESTORE:
         case APTHOOK_ONWAKEUP:
             set_light(true);
-            L.timer = light_timer_start(clock3ds_ms()); /* a fresh wait on coming back */
+            L.timer = light_timer_start(clock3ds_ms());
             break;
         case APTHOOK_ONEXIT:
             set_light(true);
@@ -70,7 +68,7 @@ static void on_abort(int signal_number)
     if (L.ready && !L.lit) {
         switch_light(true);
     }
-    (void)signal_number; /* abort() goes on to end the program */
+    (void)signal_number;
 }
 
 void backlight3ds_init(void)

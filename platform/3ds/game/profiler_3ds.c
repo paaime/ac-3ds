@@ -1,6 +1,3 @@
-/* profiler_3ds.c - frame CPU profile (see profiler_3ds.h), also fed by the PC
- * port's profiler entry points that graph.c calls. svcGetSystemTick is a system
- * call, so only a dozen points per frame are timed, never per draw. */
 #include <3ds.h>
 #include <stdio.h>
 
@@ -9,14 +6,14 @@
 #include "profiler_3ds.h"
 
 #define WINDOW_FRAMES   60
-#define LOG_WINDOWS     10  /* 10-20 s between log lines */
+#define LOG_WINDOWS     10
 
-int g_pc_profile_enabled = AC3DS_DEBUG; /* graph.c times its loop when set */
+int g_pc_profile_enabled = AC3DS_DEBUG;
 int g_pc_profile_interval = WINDOW_FRAMES;
 
 static ProfWindow s_window;
 static Prof3dsReport s_report;
-static uint64_t s_frame_start; /* also the end of the last frame */
+static uint64_t s_frame_start;
 static uint64_t s_window_start;
 static uint32_t s_mixer_ticks; /* written by core 2 */
 static uint32_t s_windows;
@@ -25,6 +22,7 @@ static const char* const NAMES[PROF_COUNT] = {
     "logic", "dl", "emu64", "wait", "end", "flush", "tex", "audio", "status",
 };
 
+/* svcGetSystemTick is a system call: a dozen points per frame are timed, never each draw. */
 uint64_t prof3ds_now(void)
 {
     return svcGetSystemTick();
@@ -76,7 +74,7 @@ static void close_window(uint64_t now)
 void prof3ds_frame(void)
 {
     uint64_t now = svcGetSystemTick();
-    if (s_frame_start == 0) { /* the first frame only starts the clock */
+    if (s_frame_start == 0) {
         s_frame_start = now;
         s_window_start = now;
         return;
@@ -93,8 +91,6 @@ Prof3dsReport prof3ds_report(void)
     return s_report;
 }
 
-/* ---- the PC port's profiler API (graph.c) ------------------------------------- */
-
 void pc_profiler_begin_frame(void) {}
 
 void pc_profiler_end_frame(double frame_ms, int audio_fill)
@@ -107,8 +103,7 @@ void pc_profiler_add_time_slow(PCProfilerTimer timer, Uint64 start)
 {
     switch (timer) {
     case PC_PROF_TIMER_GAME_LOGIC:
-        /* NES games run whole frames inside game_main (famicom_emu_main calls
-         * VIWaitForRetrace): count logic only since the last frame closed. */
+        /* NES games run whole frames inside game_main: count logic only since the last frame closed. */
         prof3ds_add(PROF_LOGIC, start > s_frame_start ? start : s_frame_start);
         break;
     case PC_PROF_TIMER_DRAW_FINISH: prof3ds_add(PROF_DRAW_FINISH, start); break;

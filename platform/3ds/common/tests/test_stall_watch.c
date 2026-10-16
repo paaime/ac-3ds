@@ -1,4 +1,3 @@
-/* Host tests for stall_watch.c. */
 #include "stall_watch.h"
 
 #include <stdio.h>
@@ -54,7 +53,7 @@ static void test_moving_again_ends_a_reported_stall_only(void)
 {
     StallWatch w = stall_watch_start(7, 0);
     w = stall_watch_check(w, 8, 100, LIMIT, REPEAT);
-    CHECK(w.event == STALL_NONE); /* no stall was reported */
+    CHECK(w.event == STALL_NONE);
     w = stall_watch_check(w, 8, 100 + LIMIT, LIMIT, REPEAT);
     CHECK(w.event == STALL_BEGAN);
     w = stall_watch_check(w, 9, 100 + LIMIT + 10, LIMIT, REPEAT);
@@ -63,7 +62,7 @@ static void test_moving_again_ends_a_reported_stall_only(void)
     w = stall_watch_check(w, 9, 100 + LIMIT + 11, LIMIT, REPEAT);
     CHECK(w.event == STALL_NONE);
     w = stall_watch_check(w, 9, 100 + 2 * LIMIT + 10, LIMIT, REPEAT);
-    CHECK(w.event == STALL_BEGAN); /* a new stall */
+    CHECK(w.event == STALL_BEGAN);
 }
 
 static void test_the_check_returns_a_copy(void)

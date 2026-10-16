@@ -1,8 +1,6 @@
 #ifndef AC3DS_PCM_LEVEL_H
 #define AC3DS_PCM_LEVEL_H
 
-/* PCM16 signal level, for the status screen's level meter. */
-
 #include <stdint.h>
 
 /* 0..32768. */

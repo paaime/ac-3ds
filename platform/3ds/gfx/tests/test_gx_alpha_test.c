@@ -1,8 +1,3 @@
-/* Host tests for gx_alpha_test.c.
- *
- * Besides the hand-picked cases, every pair of GX compares over a grid of
- * references is checked by brute force: wherever the merged single test is
- * claimed exact, it must accept exactly the alphas both GX tests accept. */
 #include "gx_alpha_test.h"
 
 #include <stdio.h>
@@ -39,7 +34,6 @@ static bool passes(GxAlphaTest t, int alpha)
 
 static void test_emu64_cases(void)
 {
-    /* emu64 alpha_compare(): GEQUAL/ALWAYS for each half, always AND. */
     GxAlphaTest off = gx_alpha_test_merge(GXA_ALWAYS, 0, GXA_OP_AND, GXA_ALWAYS, 0);
     CHECK(!off.enable && off.exact);
 

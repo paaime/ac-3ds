@@ -1,5 +1,3 @@
-/* ac3ds_main.c - Animal Crossing 3DS entry point (replaces pc/src/pc_main.c).
- * Files live in sdmc:/3ds/ac3ds/: disc image, ac3ds.log, saves, settings.ini. */
 #include "pc_platform.h"
 
 #include <3ds.h>
@@ -24,10 +22,7 @@
 #define LOG_FILE     "ac3ds.log"
 #define MB           (1024u * 1024u)
 
-/* Main thread stack; carved from the start of the malloc heap. */
 u32 __stacksize__ = 1024 * 1024;
-
-/* ---- globals declared in pc_platform.h (pc_main.c values) ---- */
 
 int g_pc_running = 1;
 int g_pc_verbose = 0;
@@ -53,25 +48,21 @@ int pc_emu64_frame_dl_cmds;
 int pc_emu64_frame_cull_visible;
 int pc_emu64_frame_cull_rejected;
 
-/* Image range for emu64's seg2k0: .3dsx load address to __end__ (3dsx.ld). */
+/* emu64's seg2k0 range: the .3dsx load address (3dsx.ld) to __end__. */
 #define IMAGE_BASE 0x00100000u
 extern char __end__[];
 unsigned int pc_image_base = IMAGE_BASE;
 unsigned int pc_image_end;
 
-/* ---- platform functions (pc_platform.h) ----------------------------------- */
-
 void pc_platform_init(void) {}
 
 void pc_platform_update_window_size(void) {}
 
-/* After each frame (VIWaitForRetrace). */
 void pc_platform_swap_buffers(void)
 {
     status3ds_frame();
 }
 
-/* 0 when the system asks the application to close (HOME menu). */
 int pc_platform_poll_events(void)
 {
     if (!aptMainLoop()) {
@@ -87,8 +78,7 @@ void pc_disc_shutdown(void);
 static bool s_game_started;
 static bool s_shut_down;
 
-/* Also called by the game's mainproc (main.c, TARGET_PC) right before exit(0).
- * As in pc_main.c, the mixer stops before the message queues it uses go away. */
+/* Also called by main.c's mainproc before exit(0); the mixer stops before its message queues. */
 void pc_platform_shutdown(void)
 {
     if (s_shut_down) {
@@ -108,26 +98,22 @@ void pc_platform_shutdown(void)
     gfxExit();
 }
 
-/* ---- boot ------------------------------------------------------------------- */
-
 int pc_assets_init(void);
 
-/* game's main() renamed to ac_entry, boot.c's to boot_main (CMakeLists.txt) */
+/* The game's main() renamed to ac_entry, boot.c's to boot_main (CMakeLists.txt). */
 extern void ac_entry(void);
 extern int boot_main(int argc, const char** argv);
 
-/* stderr (and stdout in verbose mode) to the log, truncated once then appended
- * by both streams so their lines interleave. */
 static void open_log(void)
 {
     FILE* probe = fopen(LOG_FILE, "w");
-    if (probe == NULL) { /* read-only or full SD card */
+    if (probe == NULL) {
         consoleDebugInit(debugDevice_SVC);
         return;
     }
     fclose(probe);
     if (freopen(LOG_FILE, "a", stderr) == NULL) {
-        return; /* stderr is closed: no log */
+        return;
     }
     setvbuf(stderr, NULL, _IOLBF, 0);
     if (settings3ds_on(SETTING_VERBOSE_LOG) && freopen(LOG_FILE, "a", stdout) != NULL) {
@@ -155,12 +141,11 @@ static bool is_new_3ds(void)
 {
     bool is_new = false;
     if (R_FAILED(APT_CheckNew3DS(&is_new))) {
-        is_new = true; /* unknown: go on as on a New 3DS */
+        is_new = true;
     }
     return is_new;
 }
 
-/* An original 3DS or 2DS may try: false if the player chose to quit. */
 static bool supported_console(bool is_new)
 {
     if (is_new) {
@@ -171,8 +156,6 @@ static bool supported_console(bool is_new)
                          "3DS or 2DS.");
 }
 
-/* An original 3DS gives at most 75 MB: there the game starts on less than its
- * usual minimum (heap_3ds.c), which the player was warned about. */
 static bool enough_memory(bool is_new)
 {
     Heap3dsReport h = heap3ds_report();
@@ -206,7 +189,6 @@ static bool enter_data_folder(void)
     return false;
 }
 
-/* Warns when the DSP firmware is missing; false if the game is to close. */
 static bool check_sound_firmware(void)
 {
     DspFirmware fw = dsp_firmware_load();
@@ -262,7 +244,7 @@ static bool boot(void)
     fprintf(stderr, "[boot] Animal Crossing 3DS %s, %s build\n", AC3DS_VERSION, AC3DS_DEBUG ? "developer" : "player");
     settings3ds_log();
     trace3ds_start(settings3ds_on(SETTING_VERBOSE_LOG));
-    apt_trace3ds_before_libs(settings3ds_on(SETTING_VERBOSE_LOG)); /* before C3D_Init and ndspInit */
+    apt_trace3ds_before_libs(settings3ds_on(SETTING_VERBOSE_LOG));
     test_flags_apply();
     report_memory();
     return load_game();
@@ -280,8 +262,8 @@ int main(int argc, char** argv)
     if (boot()) {
         s_game_started = true;
         trace3ds_mark("boot: the game's own start-up (ac_entry, boot_main)");
-        ac_entry();                          /* sets HotStartEntry = &entry */
-        boot_main(argc, (const char**)argv); /* full init -> HotStartEntry -> game loop */
+        ac_entry();
+        boot_main(argc, (const char**)argv);
     }
     pc_platform_shutdown();
     return 0;

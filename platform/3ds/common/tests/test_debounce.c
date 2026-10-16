@@ -1,4 +1,3 @@
-/* Host tests for debounce.c. */
 #include <stdio.h>
 
 #include "../debounce.h"
@@ -57,7 +56,6 @@ static void test_returns_copies(void)
     CHECK(b.pending && !c.pending);
 }
 
-/* A clock that went back (a stale timestamp) never makes it due early. */
 static void test_a_clock_going_back_waits(void)
 {
     Debounce d = debounce_change(debounce_idle(), 5000);

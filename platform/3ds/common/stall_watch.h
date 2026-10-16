@@ -1,10 +1,6 @@
 #ifndef AC3DS_STALL_WATCH_H
 #define AC3DS_STALL_WATCH_H
 
-/* Tells a stuck thread from a busy one (game/trace_3ds.c): the thread bumps a
- * counter, a watcher checks it. A stall is reported after `limit`, again every
- * `repeat` while it lasts, and once when the counter moves again. */
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -16,8 +12,8 @@ typedef enum {
 } StallEvent;
 
 typedef struct {
-    uint32_t seq;          /* the counter as last seen */
-    uint64_t since_ms;     /* when it last moved */
+    uint32_t seq;
+    uint64_t since_ms;
     uint64_t reported_ms;
     bool reported;
     StallEvent event;

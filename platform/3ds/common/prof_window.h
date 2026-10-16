@@ -1,16 +1,13 @@
 #ifndef AC3DS_PROF_WINDOW_H
 #define AC3DS_PROF_WINDOW_H
 
-/* CPU time per frame by subsystem slot, averaged over a window of frames
- * (game/profiler_3ds.c). Ticks are the system tick counter's. */
-
 #include <stdint.h>
 
 #define PROF_WINDOW_SLOTS 16
 
 typedef struct {
     uint64_t ticks[PROF_WINDOW_SLOTS];
-    uint64_t frame_ticks; /* whole frames, start to start */
+    uint64_t frame_ticks;
     uint32_t frames;
 } ProfWindow;
 

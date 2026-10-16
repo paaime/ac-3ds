@@ -5,7 +5,6 @@
 
 #define TEXELS_PER_TILE (PICA_TILE_DIM * PICA_TILE_DIM)
 
-/* Spreads the low three bits of v to even positions: b2 b1 b0 -> b2 0 b1 0 b0. */
 static uint32_t spread3(uint32_t v)
 {
     return (v & 1u) | ((v & 2u) << 1) | ((v & 4u) << 2);

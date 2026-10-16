@@ -1,4 +1,3 @@
-/* Host tests for pica_tile.c. */
 #include "pica_tile.h"
 
 #include <stdio.h>
@@ -16,8 +15,7 @@ static int failures = 0;
         }                                                                   \
     } while (0)
 
-/* Independent reference: tile-major order, then interleave the low three bits
- * of x and y one bit at a time (x first), as described on 3dbrew/GBATEK. */
+/* 3dbrew/GBATEK: 8x8 tiles in order, the low 3 bits of x and y interleaved inside, x first. */
 static uint32_t reference_index(uint32_t x, uint32_t y, uint32_t width)
 {
     uint32_t tiles_per_row = width / 8;
@@ -30,7 +28,6 @@ static uint32_t reference_index(uint32_t x, uint32_t y, uint32_t width)
     return tile * 64 + in_tile;
 }
 
-/* Byte pattern unique per (texel, byte) so misplaced bytes are detectable. */
 static uint8_t pattern_byte(uint32_t texel, uint32_t byte)
 {
     return (uint8_t)(texel * 7u + byte * 61u + (texel >> 8) * 13u);
@@ -56,9 +53,9 @@ static void test_known_indices(void)
     CHECK(pica_tiled_index(2, 0, 8) == 4);
     CHECK(pica_tiled_index(3, 1, 8) == 7);
     CHECK(pica_tiled_index(7, 7, 8) == 63);
-    CHECK(pica_tiled_index(8, 0, 16) == 64);   /* second tile in the row */
-    CHECK(pica_tiled_index(0, 8, 16) == 128);  /* first tile of the second row */
-    CHECK(pica_tiled_index(9, 9, 16) == 195);  /* tile (1,1) = 3*64, texel (1,1) = 3 */
+    CHECK(pica_tiled_index(8, 0, 16) == 64);
+    CHECK(pica_tiled_index(0, 8, 16) == 128);
+    CHECK(pica_tiled_index(9, 9, 16) == 195); /* tile (1,1) = 3*64, texel (1,1) = 3 */
 }
 
 static void test_index_matches_reference(void)
@@ -98,16 +95,15 @@ static void test_tile_places_every_texel(uint32_t bpp, bool flip_rows)
 
 static void test_flipped_first_row_is_stored_last(void)
 {
-    /* 8x16 image, 1 byte per texel: row 0 holds 0xA0.., the last row 0xF0.. */
     uint8_t linear[8 * 16];
     uint8_t tiled[8 * 16];
     for (uint32_t i = 0; i < sizeof(linear); i++) {
         linear[i] = (uint8_t)((i / 8 == 0) ? 0xA0 + i : (i / 8 == 15) ? 0xF0 + (i % 8) : 0);
     }
     CHECK(pica_tile(tiled, linear, 8, 16, 1, true));
-    CHECK(tiled[pica_tiled_index(0, 15, 8)] == 0xA0); /* source (0,0) -> stored row 15 */
+    CHECK(tiled[pica_tiled_index(0, 15, 8)] == 0xA0);
     CHECK(tiled[pica_tiled_index(7, 15, 8)] == 0xA7);
-    CHECK(tiled[pica_tiled_index(0, 0, 8)] == 0xF0);  /* source last row -> stored row 0 */
+    CHECK(tiled[pica_tiled_index(0, 0, 8)] == 0xF0);
 }
 
 static void test_rejects_invalid_arguments(void)
@@ -116,16 +112,16 @@ static void test_rejects_invalid_arguments(void)
     uint8_t dst[8 * 8 * 4];
     memset(dst, 0xAB, sizeof(dst));
 
-    CHECK(!pica_tile(dst, src, 12, 8, 4, false));                       /* width not a multiple of 8 */
-    CHECK(!pica_tile(dst, src, 8, 0, 4, false));                        /* zero height */
-    CHECK(!pica_tile(dst, src, 8, 8, 0, false));                        /* zero bytes per texel */
-    CHECK(!pica_tile(dst, src, 8, 8, 5, false));                        /* > 4 bytes per texel */
-    CHECK(!pica_tile(dst, src, PICA_TEXTURE_MAX_DIM + 8, 8, 4, false)); /* too wide */
+    CHECK(!pica_tile(dst, src, 12, 8, 4, false));
+    CHECK(!pica_tile(dst, src, 8, 0, 4, false));
+    CHECK(!pica_tile(dst, src, 8, 8, 0, false));
+    CHECK(!pica_tile(dst, src, 8, 8, 5, false));
+    CHECK(!pica_tile(dst, src, PICA_TEXTURE_MAX_DIM + 8, 8, 4, false));
     CHECK(!pica_tile(NULL, src, 8, 8, 4, false));
     CHECK(!pica_tile(dst, NULL, 8, 8, 4, true));
-    CHECK(!pica_tile(dst, dst, 8, 8, 4, true));                        /* in place */
-    CHECK(!pica_tile(dst, src, 8, 12, 4, false));                       /* height not a multiple of 8 */
-    CHECK(dst[0] == 0xAB && dst[sizeof(dst) - 1] == 0xAB);       /* untouched */
+    CHECK(!pica_tile(dst, dst, 8, 8, 4, true));
+    CHECK(!pica_tile(dst, src, 8, 12, 4, false));
+    CHECK(dst[0] == 0xAB && dst[sizeof(dst) - 1] == 0xAB);
 }
 
 static void test_overlap_detection(void)
@@ -133,9 +129,9 @@ static void test_overlap_detection(void)
     enum { IMAGE_BYTES = 8 * 8 * 4 };
     static uint8_t buffer[2 * IMAGE_BYTES];
 
-    CHECK(!pica_tile(buffer + 4, buffer, 8, 8, 4, false));            /* dst inside src */
-    CHECK(!pica_tile(buffer, buffer + IMAGE_BYTES - 1, 8, 8, 4, false)); /* src inside dst */
-    CHECK(pica_tile(buffer + IMAGE_BYTES, buffer, 8, 8, 4, false));   /* adjacent: allowed */
+    CHECK(!pica_tile(buffer + 4, buffer, 8, 8, 4, false));
+    CHECK(!pica_tile(buffer, buffer + IMAGE_BYTES - 1, 8, 8, 4, false));
+    CHECK(pica_tile(buffer + IMAGE_BYTES, buffer, 8, 8, 4, false));
 }
 
 int main(void)

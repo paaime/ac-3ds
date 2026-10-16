@@ -1,4 +1,3 @@
-/* Host tests for quick_save.c. */
 #include <stdio.h>
 
 #include "../quick_save.h"
@@ -12,7 +11,6 @@ static int failures;
         }                                                                         \
     } while (0)
 
-/* Outdoors in town, free to open the pockets, the house's owner. */
 static QuickSaveCheck free_in_town(void)
 {
     QuickSaveCheck c = { true, false, false, false, false, false, false, true, true, false };
@@ -27,7 +25,7 @@ static void test_free_in_town_can_save(void)
 static void test_not_where_the_gyroid_couldnt_be_used(void)
 {
     QuickSaveCheck c = free_in_town();
-    c.in_town_outdoors = false; /* indoors, another scene */
+    c.in_town_outdoors = false;
     CHECK(!quick_save_allowed(c));
     c = free_in_town();
     c.on_island = true;
@@ -42,32 +40,32 @@ static void test_not_where_the_gyroid_couldnt_be_used(void)
     c.fading = true;
     CHECK(!quick_save_allowed(c));
     c = free_in_town();
-    c.reset_pending = true; /* Mr. Resetti is due */
+    c.reset_pending = true;
     CHECK(!quick_save_allowed(c));
     c = free_in_town();
     c.menu_open = true;
     CHECK(!quick_save_allowed(c));
     c = free_in_town();
-    c.player_free = false; /* talking, busy */
+    c.player_free = false;
     CHECK(!quick_save_allowed(c));
     c = free_in_town();
-    c.house_owner = false; /* a visitor from another town */
+    c.house_owner = false;
     CHECK(!quick_save_allowed(c));
     c = free_in_town();
-    c.needs_a_friend = true; /* the gyroid's first-job rule */
+    c.needs_a_friend = true;
     CHECK(!quick_save_allowed(c));
 }
 
 /* The game's door directions: south first, one per 45 degrees (m_scene.c's angle table). */
 static void test_facing_to_door_direction(void)
 {
-    CHECK(quick_save_direction(0x0000) == 0);      /* south */
+    CHECK(quick_save_direction(0x0000) == 0);
     CHECK(quick_save_direction(0x0FFF) == 0);
-    CHECK(quick_save_direction(0x1000) == 1);      /* rounds to the nearest */
-    CHECK(quick_save_direction(0x4000) == 2);      /* east */
-    CHECK(quick_save_direction(0x8000) == 4);      /* north */
+    CHECK(quick_save_direction(0x1000) == 1);
+    CHECK(quick_save_direction(0x4000) == 2);
+    CHECK(quick_save_direction(0x8000) == 4);
     CHECK(quick_save_direction(0xE000) == 7);
-    CHECK(quick_save_direction(0xF000) == 0);      /* wraps to south */
+    CHECK(quick_save_direction(0xF000) == 0);
     CHECK(quick_save_direction(0xFFFF) == 0);
 }
 

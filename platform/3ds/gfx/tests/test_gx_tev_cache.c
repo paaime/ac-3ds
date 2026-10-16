@@ -1,6 +1,3 @@
-/* Host tests for gx_tev_cache.c. A fake translator stands in for
- * gx_tev_translate: it counts its calls and writes its input's register 1
- * into the result, so a test can tell whose result came back. */
 #include <stdio.h>
 #include <string.h>
 
@@ -72,7 +69,7 @@ static void test_unused_stages_dont_matter(void)
     reset();
     GxTevConfig c = config(1, 7);
     gx_tev_cache_get(&s_cache, &c, fake_translate, NULL);
-    c.stages[5].color.in[0] = 9; /* beyond stage_count: GX ignores it */
+    c.stages[5].color.in[0] = 9;
     c.stages[GX_TEV_MAX_STAGES - 1].alpha.op = 1;
     gx_tev_cache_get(&s_cache, &c, fake_translate, NULL);
     CHECK(s_calls == 1);
@@ -109,8 +106,6 @@ static void test_failures_are_reported_and_not_kept(void)
     CHECK(s_calls == 3);
 }
 
-/* More setups than slots: collisions evict, but every result is still the
- * one for its own setup. */
 static void test_each_setup_gets_its_own_result(void)
 {
     reset();
@@ -122,7 +117,7 @@ static void test_each_setup_gets_its_own_result(void)
             CHECK(p != NULL && p->buffer_color == (uint32_t)i * 2654435761u && p->stage_count == 1 + i % 3);
         }
     }
-    CHECK(s_calls > setups); /* the second round missed some */
+    CHECK(s_calls > setups);
 }
 
 static void test_clear_forgets(void)
@@ -136,8 +131,6 @@ static void test_clear_forgets(void)
     CHECK(s_cache.hits == 0 && s_cache.misses == 1);
 }
 
-/* An out-of-range stage count goes to the translator as is (which rejects
- * it) and never reads past the stages. */
 static void test_odd_stage_counts_reach_the_translator(void)
 {
     reset();

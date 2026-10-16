@@ -1,4 +1,3 @@
-/* Host tests for gc_pattern.c. */
 #include "gc_pattern.h"
 
 #include <stdio.h>
@@ -15,9 +14,7 @@ static int failures = 0;
         }                                                                   \
     } while (0)
 
-/* Reference reader, written from the GX layout rather than from the module:
- * 16-bit texels in 4x4 blocks, blocks left to right then top to bottom,
- * texels row by row inside a block, big-endian. */
+/* GX 16-bit layout: 4x4 blocks left to right then down, texels row by row inside, big-endian. */
 static uint16_t texel(const uint8_t* tex, uint32_t width, uint32_t x, uint32_t y)
 {
     uint32_t block = (y / 4) * (width / 4) + x / 4;
@@ -70,7 +67,6 @@ static void test_wide_texture(void)
     CHECK(texel(tex, 16, 7, 7) == 7 && texel(tex, 16, 8, 0) == 9 && texel(tex, 16, 15, 7) == 9);
 }
 
-/* Alpha of an RGB5A3 texel, 0..7 (7 for an opaque one). */
 static int alpha_of(uint16_t v)
 {
     return (v & 0x8000) ? 7 : (v >> 12) & 7;
@@ -80,12 +76,12 @@ static void test_disc(void)
 {
     uint8_t tex[32 * 32 * 2];
     CHECK(gc_disc_rgb5a3(tex, sizeof(tex), 32, 255, 255, 255));
-    CHECK(texel(tex, 32, 16, 16) == 0xFFFF);           /* the middle: opaque white */
-    CHECK(texel(tex, 32, 2, 16) == 0xFFFF);            /* well inside, on the left */
-    CHECK(alpha_of(texel(tex, 32, 0, 0)) == 0);        /* the corners are clear */
+    CHECK(texel(tex, 32, 16, 16) == 0xFFFF);
+    CHECK(texel(tex, 32, 2, 16) == 0xFFFF);
+    CHECK(alpha_of(texel(tex, 32, 0, 0)) == 0);
     CHECK(alpha_of(texel(tex, 32, 31, 31)) == 0);
-    CHECK(alpha_of(texel(tex, 32, 0, 16)) < 7);        /* the edge is soft */
-    for (uint32_t y = 0; y < 32; y++) {                /* symmetric */
+    CHECK(alpha_of(texel(tex, 32, 0, 16)) < 7);
+    for (uint32_t y = 0; y < 32; y++) {
         for (uint32_t x = 0; x < 32; x++) {
             CHECK(texel(tex, 32, x, y) == texel(tex, 32, 31 - x, y));
             CHECK(texel(tex, 32, x, y) == texel(tex, 32, x, 31 - y));
@@ -97,8 +93,8 @@ static void test_disc_colour_and_bad_arguments(void)
 {
     uint8_t tex[8 * 8 * 2];
     CHECK(gc_disc_rgb5a3(tex, sizeof(tex), 8, 255, 0, 0));
-    CHECK(texel(tex, 8, 4, 4) == 0xFC00);              /* opaque red */
-    CHECK(!gc_disc_rgb5a3(tex, sizeof(tex), 6, 255, 0, 0));  /* not a block multiple */
+    CHECK(texel(tex, 8, 4, 4) == 0xFC00);
+    CHECK(!gc_disc_rgb5a3(tex, sizeof(tex), 6, 255, 0, 0));
     CHECK(!gc_disc_rgb5a3(tex, sizeof(tex) - 1, 8, 255, 0, 0));
     CHECK(!gc_disc_rgb5a3(NULL, sizeof(tex), 8, 255, 0, 0));
 }
@@ -118,17 +114,17 @@ static void test_arrow(void)
     uint8_t down[16 * 16 * 2];
     CHECK(gc_arrow_rgb5a3(up, sizeof(up), 16, true, 255, 255, 255));
     CHECK(gc_arrow_rgb5a3(down, sizeof(down), 16, false, 255, 255, 255));
-    CHECK(texel(up, 16, 8, 9) == 0xFFFF);                  /* inside: opaque white */
-    CHECK(alpha_of(texel(up, 16, 0, 0)) == 0);             /* corners clear */
+    CHECK(texel(up, 16, 8, 9) == 0xFFFF);
+    CHECK(alpha_of(texel(up, 16, 0, 0)) == 0);
     CHECK(alpha_of(texel(up, 16, 15, 15)) == 0);
-    CHECK(alpha_of(texel(up, 16, 8, 0)) == 0);             /* above the tip */
-    CHECK(alpha_of(texel(up, 16, 8, 15)) == 0);            /* below the base */
-    CHECK(opaque_in_row(up, 16, 6) < opaque_in_row(up, 16, 10)); /* up: wider towards the bottom */
+    CHECK(alpha_of(texel(up, 16, 8, 0)) == 0);
+    CHECK(alpha_of(texel(up, 16, 8, 15)) == 0);
+    CHECK(opaque_in_row(up, 16, 6) < opaque_in_row(up, 16, 10));
     CHECK(opaque_in_row(up, 16, 10) > 0);
     for (uint32_t y = 0; y < 16; y++) {
         for (uint32_t x = 0; x < 16; x++) {
-            CHECK(texel(up, 16, x, y) == texel(up, 16, 15 - x, y));     /* symmetric */
-            CHECK(texel(up, 16, x, y) == texel(down, 16, x, 15 - y));   /* down: up, upside down */
+            CHECK(texel(up, 16, x, y) == texel(up, 16, 15 - x, y));
+            CHECK(texel(up, 16, x, y) == texel(down, 16, x, 15 - y));
         }
     }
 }
@@ -137,7 +133,7 @@ static void test_arrow_colour_and_bad_arguments(void)
 {
     uint8_t tex[16 * 16 * 2];
     CHECK(gc_arrow_rgb5a3(tex, sizeof(tex), 16, true, 0, 0, 255));
-    CHECK(texel(tex, 16, 8, 9) == 0x801F);                 /* opaque blue */
+    CHECK(texel(tex, 16, 8, 9) == 0x801F);
     CHECK(!gc_arrow_rgb5a3(tex, sizeof(tex), 6, true, 0, 0, 0));
     CHECK(!gc_arrow_rgb5a3(tex, sizeof(tex) - 1, 16, true, 0, 0, 0));
     CHECK(!gc_arrow_rgb5a3(NULL, sizeof(tex), 16, true, 0, 0, 0));
@@ -147,12 +143,12 @@ static void test_rejects_bad_arguments(void)
 {
     uint8_t tex[128];
     memset(tex, 0xAB, sizeof(tex));
-    CHECK(!gc_checker_rgb5a3(tex, sizeof(tex), 6, 8, 2, 1, 2));  /* width not a block multiple */
-    CHECK(!gc_checker_rgb5a3(tex, sizeof(tex), 8, 0, 2, 1, 2));  /* empty */
-    CHECK(!gc_checker_rgb5a3(tex, sizeof(tex), 8, 8, 0, 1, 2));  /* no cell size */
-    CHECK(!gc_checker_rgb5a3(tex, 127, 8, 8, 2, 1, 2));          /* buffer too small */
+    CHECK(!gc_checker_rgb5a3(tex, sizeof(tex), 6, 8, 2, 1, 2));
+    CHECK(!gc_checker_rgb5a3(tex, sizeof(tex), 8, 0, 2, 1, 2));
+    CHECK(!gc_checker_rgb5a3(tex, sizeof(tex), 8, 8, 0, 1, 2));
+    CHECK(!gc_checker_rgb5a3(tex, 127, 8, 8, 2, 1, 2));
     CHECK(!gc_checker_rgb5a3(NULL, 128, 8, 8, 2, 1, 2));
-    CHECK(tex[0] == 0xAB && tex[127] == 0xAB);                   /* untouched */
+    CHECK(tex[0] == 0xAB && tex[127] == 0xAB);
 }
 
 int main(void)

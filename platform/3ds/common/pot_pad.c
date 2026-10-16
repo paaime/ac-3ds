@@ -63,7 +63,7 @@ bool pot_pad_rgba8_wrap(uint32_t* dst, const uint32_t* src, uint32_t width, uint
     if (dst == NULL || src == NULL || s_axis.padded == 0 || t_axis.padded == 0) {
         return false;
     }
-    uint16_t column[POT_PAD_MAX_SIDE]; /* source column of each padded column, worked out once */
+    uint16_t column[POT_PAD_MAX_SIDE];
     for (uint32_t x = 0; x < s_axis.padded; x++) {
         column[x] = (uint16_t)source_index(x, width, s_axis, wrap_s);
     }

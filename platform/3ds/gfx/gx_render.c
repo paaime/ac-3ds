@@ -1,4 +1,3 @@
-/* citro3d renderer for the GX backend: vertex batches + GxbState -> PICA200 draws. */
 #include "gx_render.h"
 
 #include <3ds.h>
@@ -18,7 +17,6 @@
 #include "gx_texcache.h"
 #include "gx_uniforms.h"
 
-/* gx_tev.h mirrors the hardware enums; make sure they really match. */
 _Static_assert((int)PICA_SRC_PRIMARY == (int)GPU_PRIMARY_COLOR, "TEVSRC");
 _Static_assert((int)PICA_SRC_TEXTURE0 == (int)GPU_TEXTURE0, "TEVSRC");
 _Static_assert((int)PICA_SRC_PREVIOUS_BUFFER == (int)GPU_PREVIOUS_BUFFER, "TEVSRC");
@@ -43,8 +41,7 @@ typedef struct {
 #define GX_PRIM_FAN     0xA0
 #define SHADER_TEXGENS  GXBIND_TEXGEN_UNITS
 #define FALLBACK_SIDE   8 /* smallest PICA texture */
-/* Kept free for one more draw (~250 words) plus the frame's end: citro3d
- * panics (svcBreak) on overflow, so draws that don't fit are dropped. */
+/* Room for one draw (~250 words) and the frame's end: citro3d svcBreaks on command buffer overflow. */
 #define DRAW_CMD_RESERVE_WORDS 1024
 
 static struct {
@@ -55,11 +52,10 @@ static struct {
     C3D_BufInfo buf;
     GxrVertex* ring;
     u32 ring_used;
-    C3D_Tex fallback_tex; /* white */
+    C3D_Tex fallback_tex;
     bool fallback_ready;
-    C3D_Tex black_tex;    /* the 4:3 picture's side bars (gxr_draw_bars) */
+    C3D_Tex black_tex;
     bool black_ready;
-    /* batch in progress */
     bool batch_open;
     u8 primitive;
     u32 batch_start;
@@ -69,11 +65,10 @@ static struct {
     int quad_count;
     GxrStats stats;
     GxTevCache tev_cache;
-    uint64_t tev_stamp;   /* the last draw's GxbState.stamps.tev, its translation: */
+    uint64_t tev_stamp;
     bool tev_ok;
     PicaCombiner tev_combiner;
     const char* tev_reason;
-    /* viewport and scissor last sent, in GX terms; the target and its image area */
     GxScreenRect viewport;
     GxScreenRect scissor;
     bool view_valid;
@@ -81,7 +76,6 @@ static struct {
     float wide_factor; /* below 1 while the top screen shows Wide */
     GxViewportFold fold;
     bool view_visible;
-    /* last sent: citro3d re-sends whatever a setter touches, changed or not */
     PicaCombiner combiner;
     bool combiner_valid;
     bool in_frame;
@@ -100,8 +94,6 @@ void gxr_set_picture_shape(GxrPictureShape shape)
 {
     s_picture_shape = shape;
 }
-
-/* ---- vertex capture ------------------------------------------------------- */
 
 static void emit(const GxrVertex* v)
 {
@@ -123,7 +115,7 @@ static void commit_current(void)
         return;
     }
     R.quad[R.quad_count++] = R.current;
-    if (R.quad_count == 4) { /* quad 0123 -> triangles 012, 023 (same winding) */
+    if (R.quad_count == 4) {
         emit(&R.quad[0]);
         emit(&R.quad[1]);
         emit(&R.quad[2]);
@@ -142,7 +134,6 @@ void gxr_begin(uint8_t primitive, uint16_t vertex_count)
     R.batch_start = R.ring_used;
     R.have_current = false;
     R.quad_count = 0;
-    /* defaults for attributes the vertex descriptor leaves out */
     memset(&R.current, 0, sizeof(R.current));
     R.current.nrm[2] = 1.0f;
     memset(R.current.color, 0xFF, sizeof(R.current.color));
@@ -178,8 +169,6 @@ void gxr_texcoord(float s, float t)
     R.current.tc[1] = t;
 }
 
-/* ---- combiner ------------------------------------------------------------------- */
-
 static u32 to_texenv_color(uint32_t rgba)
 {
     return ((rgba >> 24) & 0xFF) | (((rgba >> 16) & 0xFF) << 8) | (((rgba >> 8) & 0xFF) << 16) |
@@ -203,8 +192,7 @@ static bool same_combiner(const PicaCombiner* a, const PicaCombiner* b)
     return true;
 }
 
-/* Skipped when the stages are the ones already set: C3D_GetTexEnv marks a
- * stage for re-sending whether it changes or not. */
+/* C3D_GetTexEnv marks a stage for re-sending whether it changes or not. */
 static void apply_combiner(const PicaCombiner* p)
 {
     if (R.combiner_valid && same_combiner(p, &R.combiner)) {
@@ -234,7 +222,6 @@ static void apply_combiner(const PicaCombiner* p)
     }
 }
 
-/* Used when a TEV config can't be translated: texture x vertex colour. */
 static void fallback_combiner(const GxbState* st, PicaCombiner* p)
 {
     memset(p, 0, sizeof(*p));
@@ -252,15 +239,12 @@ static void fallback_combiner(const GxbState* st, PicaCombiner* p)
     s->alpha = (PicaCombinerOp){ func, { src0, PICA_SRC_PRIMARY, PICA_SRC_PRIMARY }, { 0, 0, 0 }, 0 };
 }
 
-/* ---- viewport and scissor ------------------------------------------------------------ */
-
 static bool same_rect(GxScreenRect a, GxScreenRect b)
 {
     return a.left == b.left && a.top == b.top && a.width == b.width && a.height == b.height;
 }
 
-/* The scissor clips to GX scissor and viewport (GX draws nothing outside its
- * viewport); the PICA viewport stays the whole target. False if nothing is left. */
+/* GX draws nothing outside its viewport: the scissor clips to both; the PICA viewport stays the whole target. */
 static bool apply_view(const GxbState* st)
 {
     GxScreenRect vp = { st->viewport[0], st->viewport[1], st->viewport[2], st->viewport[3] };
@@ -290,8 +274,6 @@ static bool apply_view(const GxbState* st)
     return true;
 }
 
-/* ---- draw ------------------------------------------------------------------------- */
-
 static GPU_Primitive_t pica_primitive(uint8_t gx, bool* supported)
 {
     *supported = true;
@@ -300,7 +282,7 @@ static GPU_Primitive_t pica_primitive(uint8_t gx, bool* supported)
     case GX_PRIM_TRIS: return GPU_TRIANGLES;
     case GX_PRIM_STRIP: return GPU_TRIANGLE_STRIP;
     case GX_PRIM_FAN: return GPU_TRIANGLE_FAN;
-    default: *supported = false; return GPU_TRIANGLES; /* lines, points */
+    default: *supported = false; return GPU_TRIANGLES;
     }
 }
 
@@ -332,7 +314,6 @@ static void debug_draw(const GxbState* st, u32 count, int pica_stages, const cha
     gxd_draw(st, &d);
 }
 
-/* The last draw's combiner while the TEV stamp is unchanged. */
 static const PicaCombiner* translate_tev(const GxbState* st, const char** reason)
 {
     if (st->stamps.tev == 0 || st->stamps.tev != R.tev_stamp) {
@@ -350,8 +331,7 @@ static const PicaCombiner* translate_tev(const GxbState* st, const char** reason
 
 void gxr_end(const GxbState* st)
 {
-    /* emu64 (TARGET_PC) also calls GXEnd after loops whose primitives already
-     * ended their own batches; like pc_gx.c, ignore it with no batch open. */
+    /* emu64 (TARGET_PC) calls GXEnd again after batches that already ended: ignored, as in pc_gx.c. */
     if (!R.batch_open || R.ring_used < R.batch_start) {
         reset_batch();
         return;
@@ -424,8 +404,6 @@ void gxr_end(const GxbState* st)
     R.stats.max_draw_cmd_words = words > R.stats.max_draw_cmd_words ? words : R.stats.max_draw_cmd_words;
 }
 
-/* ---- GPU check -------------------------------------------------------------------- */
-
 void gxr_gpu_check(uint32_t frames)
 {
     gxg_arm(frames);
@@ -456,9 +434,7 @@ bool gxr_gpu_check_frame_end(void)
     return gxg_frame_end(R.stats.draws);
 }
 
-/* ---- blit ------------------------------------------------------------------------- */
-
-#define BLIT_VERTICES   6     /* two triangles */
+#define BLIT_VERTICES   6
 #define SCREEN_HALF_W   200.0f /* the top screen is 400 x 240 (landscape) */
 #define SCREEN_HALF_H   120.0f
 #define BLIT_DEPTH      -0.5f /* inside GX's clip depth [-1, 0]; the depth test is off */
@@ -520,13 +496,11 @@ void gxr_draw_bars(void)
     float height = (float)t.fb_width;
     float right = t.image_x + t.image_w;
     if (!R.black_ready || t.image_x <= 0.0f) {
-        return; /* the picture fills the screen */
+        return;
     }
     gxr_blit(&R.black_tex, 0.0f, 0.0f, t.image_x, height, 1.0f, 1.0f);
     gxr_blit(&R.black_tex, right, 0.0f, width - right, height, 1.0f, 1.0f);
 }
-
-/* ---- lifecycle -------------------------------------------------------------------- */
 
 static bool load_program(void)
 {
@@ -569,7 +543,7 @@ static bool create_fallback_texture(void)
 bool gxr_init(void)
 {
     memset(&R, 0, sizeof(R));
-    gxg_arm(0); /* state outside R */
+    gxg_arm(0);
     gxf_invalidate();
     R.ring = linearAlloc(sizeof(GxrVertex) * RING_VERTICES);
     if (R.ring == NULL || !load_program() || !gxtc_init() || !create_fallback_texture()) {
@@ -577,10 +551,10 @@ bool gxr_init(void)
         return false;
     }
     AttrInfo_Init(&R.attr);
-    AttrInfo_AddLoader(&R.attr, 0, GPU_FLOAT, 3);         /* v0 position */
-    AttrInfo_AddLoader(&R.attr, 1, GPU_FLOAT, 3);         /* v1 normal */
-    AttrInfo_AddLoader(&R.attr, 2, GPU_UNSIGNED_BYTE, 4); /* v2 colour */
-    AttrInfo_AddLoader(&R.attr, 3, GPU_FLOAT, 2);         /* v3 texcoord0 */
+    AttrInfo_AddLoader(&R.attr, 0, GPU_FLOAT, 3);
+    AttrInfo_AddLoader(&R.attr, 1, GPU_FLOAT, 3);
+    AttrInfo_AddLoader(&R.attr, 2, GPU_UNSIGNED_BYTE, 4);
+    AttrInfo_AddLoader(&R.attr, 3, GPU_FLOAT, 2);
     BufInfo_Init(&R.buf);
     BufInfo_Add(&R.buf, R.ring, sizeof(GxrVertex), 4, 0x3210);
     return true;
@@ -626,12 +600,12 @@ void gxr_frame_begin(float target_width, float target_height)
     gxr_invalidate_state();
     memset(&R.stats, 0, sizeof(R.stats));
     if (gxg_active()) {
-        gxd_arm(); /* log each checked draw */
+        gxd_arm();
     }
     gxd_frame_begin();
     gxe_frame_begin();
     R.ring_used = 0;
-    reset_batch(); /* a batch left open last frame pointed into the old ring */
+    reset_batch();
     gxtc_frame_begin();
     C3D_BindProgram(&R.program);
     C3D_SetAttrInfo(&R.attr);
@@ -651,7 +625,7 @@ void gxr_invalidate_state(void)
 void gxr_set_target(float target_width, float target_height)
 {
     R.target = gx_screen_target(GXB_EFB_WIDTH, GXB_EFB_HEIGHT, (uint32_t)target_width, (uint32_t)target_height, false);
-    R.wide_factor = 1.0f; /* the bottom screen draws as the game does */
+    R.wide_factor = 1.0f;
     R.view_valid = false; /* C3D_FrameDrawOn reset the viewport and scissor */
     gxr_invalidate_state();
     gxtc_pass_begin();

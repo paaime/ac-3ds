@@ -1,8 +1,6 @@
 #ifndef AC3DS_DEBOUNCE_H
 #define AC3DS_DEBOUNCE_H
 
-/* Act once things have been quiet for a while (the settings.ini write). */
-
 #include <stdbool.h>
 #include <stdint.h>
 

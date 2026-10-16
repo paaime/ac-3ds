@@ -1,5 +1,3 @@
-/* dsp_firmware_3ds.c - the DSP firmware for ndsp, found and validated here: ndspInit's own search
- * maps the launcher's copy at fake_heap_end, which is inside the GPU pool here (all memory is linear). */
 #include <3ds.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +9,7 @@
 #define FIRMWARE_PATH       "sdmc:/3ds/dspfirm.cdc"
 #define LAUNCHER_SERVICE    "hb:ndsp"
 #define LAUNCHER_MAP_ADDR   OS_HEAP_AREA_BEGIN /* free: there is no regular heap */
-#define MAX_FIRMWARE_BYTES  (1024u * 1024u)    /* dspfirm.cdc is a few hundred KB */
+#define MAX_FIRMWARE_BYTES  (1024u * 1024u)
 
 static const DspFirmware NO_FIRMWARE = { NULL, 0, DSP_FIRMWARE_NONE };
 
@@ -43,7 +41,6 @@ static DspFirmware load_from_sd(void)
     return fw;
 }
 
-/* Bytes mapped at `addr`, so a bad size in the header can't read past the block. */
 static uint32_t mapped_bytes(u32 addr)
 {
     MemInfo info;
@@ -54,6 +51,7 @@ static uint32_t mapped_bytes(u32 addr)
     return info.base_addr + info.size - addr;
 }
 
+/* Not ndspInit's own search: it maps this at fake_heap_end, inside the GPU pool here (all memory is linear). */
 static DspFirmware load_from_launcher(void)
 {
     Handle block = envGetHandle(LAUNCHER_SERVICE);

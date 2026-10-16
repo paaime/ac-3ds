@@ -1,4 +1,3 @@
-/* Host tests for press_hold.c. */
 #include <stdio.h>
 
 #include "../press_hold.h"
@@ -29,7 +28,7 @@ static void test_a_short_press_is_a_tap_on_release(void)
     CHECK(s.event == PRESS_NONE && s.state.active);
     s = press_hold_step(s.state, false, 1600, HOLD);
     CHECK(s.event == PRESS_TAP && !s.state.active);
-    s = press_hold_step(s.state, false, 1700, HOLD); /* only once */
+    s = press_hold_step(s.state, false, 1700, HOLD);
     CHECK(s.event == PRESS_NONE);
 }
 
@@ -40,9 +39,9 @@ static void test_holding_fires_once_and_the_release_is_silent(void)
     CHECK(s.event == PRESS_NONE);
     s = press_hold_step(s.state, true, 3000, HOLD);
     CHECK(s.event == PRESS_HOLD && s.state.active);
-    s = press_hold_step(s.state, true, 4000, HOLD); /* still held: nothing more */
+    s = press_hold_step(s.state, true, 4000, HOLD);
     CHECK(s.event == PRESS_NONE && s.state.active);
-    s = press_hold_step(s.state, false, 4100, HOLD); /* released: no tap */
+    s = press_hold_step(s.state, false, 4100, HOLD);
     CHECK(s.event == PRESS_NONE && !s.state.active);
 }
 

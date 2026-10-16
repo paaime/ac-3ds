@@ -1,6 +1,3 @@
-/* nes_3ds.cpp - the in-game NES games on QuickNES (lib/quicknes), behind the fixNES names famicom.cpp
- * calls (replaces pc/src/pc_nes_fixnes.c). Its memory comes from malloc (blargg_new), not from the
- * game's heaps, which JSystem's global operator new would use. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,8 +19,7 @@ static const unsigned WRAM_BYTES = Nes_Emu::low_mem_size;
 static_assert(sizeof(Nes_Emu::rgb_t) == 3, "nes_colors read as RGB triplets");
 
 extern "C" {
-/* The cartridge's battery RAM: famicom.cpp copies the save in after
- * pc_fixnes_init and out before pc_fixnes_cleanup. */
+/* Battery RAM: famicom.cpp copies the save in after pc_fixnes_init, out before pc_fixnes_cleanup. */
 unsigned char* emuPrgRAM;
 unsigned int emuPrgRAMsize;
 
@@ -38,12 +34,12 @@ void pc_fixnes_cleanup(void);
 }
 
 static struct {
-    Nes_Emu* emu;          /* NULL: no game running, the picture stays black */
-    uint8_t* pixels;       /* QuickNES draws 8-bit indices here, with margins */
-    uint8_t buttons;       /* bit 0 A, 1 B, 2 Select, 3 Start, 4 Up, 5 Down, 6 Left, 7 Right */
-    bool frame_error_seen; /* emulate_frame's errors are logged once per game */
+    Nes_Emu* emu;
+    uint8_t* pixels;
+    uint8_t buttons; /* bit 0 A, 1 B, 2 Select, 3 Start, 4 Up, 5 Down, 6 Left, 7 Right */
+    bool frame_error_seen;
     uint16_t lut[NES_PIXELS_LUT_SIZE];
-    uint16_t frame[Nes_Emu::image_width * Nes_Emu::image_height]; /* RGB565 */
+    uint16_t frame[Nes_Emu::image_width * Nes_Emu::image_height];
     int16_t samples[MAX_SAMPLES];
 } N;
 
@@ -59,7 +55,7 @@ static void release_emulator(void)
 
 static const char* start_emulator(const uint8_t* ines_data, long ines_size)
 {
-    N.emu = blargg_new<Nes_Emu>();
+    N.emu = blargg_new<Nes_Emu>(); /* not new: the global operator new is JSystem's (the game heap) */
     if (N.emu == NULL) {
         return "out of memory";
     }
@@ -78,7 +74,6 @@ static const char* start_emulator(const uint8_t* ines_data, long ines_size)
     return err;
 }
 
-/* `ines_size` is famicom.cpp's buffer, which may be larger than the file. */
 void pc_fixnes_init(uint8_t* ines_data, int ines_size)
 {
     release_emulator();
@@ -103,7 +98,6 @@ void pc_fixnes_init(uint8_t* ines_data, int ines_size)
             cart->chr_size() / 1024);
 }
 
-/* High scores the game puts into the running NES game's RAM. */
 void pc_fixnes_write_wram(unsigned int ofs, const uint8_t* data, unsigned int size)
 {
     if (N.emu != NULL && data != NULL && ofs <= WRAM_BYTES && size <= WRAM_BYTES - ofs) {
@@ -111,7 +105,6 @@ void pc_fixnes_write_wram(unsigned int ofs, const uint8_t* data, unsigned int si
     }
 }
 
-/* The NES's 2 KB RAM back to the game, which watches it for high scores. */
 void pc_fixnes_sync_wram(uint8_t* dst_wram)
 {
     if (N.emu != NULL && dst_wram != NULL) {
@@ -122,7 +115,7 @@ void pc_fixnes_sync_wram(uint8_t* dst_wram)
 void pc_fixnes_reset(void)
 {
     if (N.emu != NULL) {
-        N.emu->reset(false); /* the console's reset button, as L+R+START on the NES pad */
+        N.emu->reset(false);
     }
 }
 

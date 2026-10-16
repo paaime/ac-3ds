@@ -1,4 +1,3 @@
-/* Host tests for disc_check.c. */
 #include <stdio.h>
 #include <string.h>
 
@@ -18,7 +17,7 @@ static void test_disc_image_names(void)
     CHECK(disc_check_name("Animal Crossing (USA).iso"));
     CHECK(disc_check_name("ac.GCM"));
     CHECK(disc_check_name("ac.ciso"));
-    CHECK(!disc_check_name("._Animal Crossing (USA).iso")); /* the copy's macOS metadata */
+    CHECK(!disc_check_name("._Animal Crossing (USA).iso"));
     CHECK(!disc_check_name(".hidden.iso"));
     CHECK(!disc_check_name("ac.iso.txt"));
     CHECK(!disc_check_name("save"));
@@ -27,7 +26,6 @@ static void test_disc_image_names(void)
     CHECK(!disc_check_name(NULL));
 }
 
-/* The disc header's first 8 bytes: game ID (6), disc number, revision. */
 static void test_the_usa_first_release(void)
 {
     const unsigned char ok[8] = { 'G', 'A', 'F', 'E', '0', '1', 0, 0 };
@@ -44,7 +42,7 @@ static void test_other_regions(void)
     CHECK(strcmp(disc_check_region('J'), "Japanese") == 0);
     CHECK(strcmp(disc_check_region('U'), "Australian") == 0);
     CHECK(strcmp(disc_check_region('E'), "USA") == 0);
-    CHECK(disc_check_region('X') == NULL); /* the message then says "another region" */
+    CHECK(disc_check_region('X') == NULL);
     const unsigned char eplus[8] = { 'G', 'A', 'E', 'J', '0', '1', 0, 0 }; /* Doubutsu no Mori e+ */
     CHECK(disc_check_id(eplus) == DISC_ID_OTHER_REGION);
 }
@@ -66,13 +64,12 @@ static void test_printable_id(void)
     CHECK(strcmp(id, "GA?E?1") == 0);
 }
 
-/* An .iso/.gcm holds the whole disc: it must reach the end of the file
- * table (its offset and size at 0x424 and 0x428), or the image was cut. */
+/* The file table's offset and size sit at 0x424 and 0x428. */
 static void test_a_cut_image(void)
 {
     unsigned char h[DISC_HEADER_BYTES] = { 0 };
-    h[0x424] = 0x00; h[0x425] = 0x0F; h[0x426] = 0xE5; h[0x427] = 0x00; /* 0xFE500 */
-    h[0x428] = 0x00; h[0x429] = 0x00; h[0x42A] = 0x80; h[0x42B] = 0x00; /* 0x8000 */
+    h[0x424] = 0x00; h[0x425] = 0x0F; h[0x426] = 0xE5; h[0x427] = 0x00;
+    h[0x428] = 0x00; h[0x429] = 0x00; h[0x42A] = 0x80; h[0x42B] = 0x00;
     CHECK(disc_check_complete(h, 0x57058000ull));
     CHECK(disc_check_complete(h, 0xFE500 + 0x8000));
     CHECK(!disc_check_complete(h, 0xFE500 + 0x7FFF));

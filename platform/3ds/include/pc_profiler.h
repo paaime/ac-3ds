@@ -1,5 +1,4 @@
-/* pc_profiler.h — 3DS version of pc/include/pc_profiler.h, with SDL's Uint64
- * defined here; graph.c's timers feed game/profiler_3ds.c. */
+/* 3DS version of pc/include/pc_profiler.h, without SDL. */
 #ifndef PC_PROFILER_H
 #define PC_PROFILER_H
 
@@ -54,7 +53,6 @@ void pc_profiler_add_dirty_mask_slow(unsigned int dirty);
 
 uint64_t prof3ds_now(void); /* the system tick */
 
-/* Hot-path wrappers: with profiling off these cost one predicted branch, no call. */
 static inline Uint64 pc_profiler_begin_timer(void) {
     return g_pc_profile_enabled ? prof3ds_now() : 0;
 }

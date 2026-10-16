@@ -1,4 +1,3 @@
-/* Host tests for nes_pixels.c. */
 #include "nes_pixels.h"
 
 #include <stdio.h>
@@ -16,10 +15,10 @@ static int failures = 0;
     } while (0)
 
 static const uint8_t COLORS[4 * 3] = {
-    0, 0, 0,       /* 0: black */
-    255, 255, 255, /* 1: white */
-    255, 0, 0,     /* 2: red */
-    0, 0, 255,     /* 3: blue */
+    0, 0, 0,
+    255, 255, 255,
+    255, 0, 0,
+    0, 0, 255,
 };
 
 static void test_lut_maps_the_frames_range(void)
@@ -28,11 +27,11 @@ static void test_lut_maps_the_frames_range(void)
     palette[64] = 1;
     palette[65] = 2;
     palette[66] = 3;
-    palette[10] = 1; /* outside the range: ignored */
+    palette[10] = 1;
     uint16_t lut[NES_PIXELS_LUT_SIZE];
     nes_pixels_lut(lut, palette, 64, 3, COLORS, 4);
     CHECK(lut[64] == 0xFFFF);
-    CHECK(lut[65] == 0xF800); /* red in the high bits */
+    CHECK(lut[65] == 0xF800);
     CHECK(lut[66] == 0x001F);
     CHECK(lut[10] == 0);
     CHECK(lut[63] == 0 && lut[67] == 0);
@@ -50,7 +49,7 @@ static void test_lut_rounds_down_to_565(void)
 static void test_lut_rejects_colours_out_of_the_table(void)
 {
     int16_t palette[NES_PIXELS_LUT_SIZE] = { 0 };
-    palette[0] = 4;  /* one past the table */
+    palette[0] = 4;
     palette[1] = -1;
     palette[2] = 1;
     uint16_t lut[NES_PIXELS_LUT_SIZE];
@@ -77,14 +76,13 @@ static void test_converts_rows_with_a_pitch(void)
     lut[1] = 0x1111;
     lut[2] = 0x2222;
     lut[200] = 0xC8C8;
-    /* 2 rows of 3 pixels, 5 bytes apart (the extra bytes are QuickNES's margin) */
     const uint8_t src[10] = { 1, 2, 200, 9, 9, 2, 1, 1, 9, 9 };
     uint16_t dst[7];
     dst[6] = 0x7777;
     nes_pixels_to_rgb565(dst, src, 5, 3, 2, lut);
     CHECK(dst[0] == 0x1111 && dst[1] == 0x2222 && dst[2] == 0xC8C8);
     CHECK(dst[3] == 0x2222 && dst[4] == 0x1111 && dst[5] == 0x1111);
-    CHECK(dst[6] == 0x7777); /* nothing written past width * rows */
+    CHECK(dst[6] == 0x7777);
 }
 
 static void test_no_rows_writes_nothing(void)

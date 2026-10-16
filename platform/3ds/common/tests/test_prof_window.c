@@ -1,4 +1,3 @@
-/* Host tests for prof_window.c. */
 #include "prof_window.h"
 
 #include <math.h>
@@ -16,7 +15,7 @@ static int failures = 0;
     } while (0)
 
 #define NEAR_EQ(a, b) (fabs((a) - (b)) < 1e-6)
-#define HZ 1000000u /* 1 tick = 1 us */
+#define HZ 1000000u
 
 static void test_empty_window_reads_zero(void)
 {
@@ -29,7 +28,7 @@ static void test_empty_window_reads_zero(void)
 static void test_averages_per_frame(void)
 {
     ProfWindow w = prof_window_create();
-    w = prof_window_add(w, 2, 4000);  /* 4 ms in slot 2 */
+    w = prof_window_add(w, 2, 4000);
     w = prof_window_end_frame(w, 16000);
     w = prof_window_add(w, 2, 2000);
     w = prof_window_add(w, 2, 2000);

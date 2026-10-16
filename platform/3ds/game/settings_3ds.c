@@ -1,4 +1,3 @@
-/* settings_3ds.c - the port's settings in settings.ini (see settings_3ds.h). */
 #include "pc_platform.h"
 #include "pc_settings.h"
 
@@ -12,18 +11,17 @@
 #include "texdump_3ds.h"
 #include "clock_3ds.h"
 
-#define SETTINGS_FILE  "settings.ini" /* in the cwd, the data folder */
-#define SAVE_DELAY_MS  2000u          /* after the last change: a burst of taps is one write */
+#define SETTINGS_FILE  "settings.ini"
+#define SAVE_DELAY_MS  2000u /* after the last change: a burst of taps is one write */
 
-int ac3ds_fclose_durable(FILE* f); /* save_3ds.c */
+int ac3ds_fclose_durable(FILE* f);
 
 static Settings s_settings;
 static bool s_from_file;
-static Debounce s_unsaved; /* changed since settings.ini was written */
-int g_ac3ds_fast_text;      /* pc_platform.h: read by the game's message code */
+static Debounce s_unsaved;
+int g_ac3ds_fast_text;
 static aptHookCookie s_apt_hook;
 
-/* Settings the player build doesn't offer count as off, whatever the file says. */
 static bool effective(Settings s, SettingId id)
 {
     return settings_get(s, id) && settings_offered(id, AC3DS_DEBUG);
@@ -41,16 +39,14 @@ static GxrPictureShape picture_shape(Settings s)
     }
 }
 
-/* What applies while the game runs (the rest is read where it's used). */
 static void apply(Settings s)
 {
-    g_pc_settings.disable_resetti = effective(s, SETTING_SKIP_RESETTI); /* pc_m_card.c, when a town loads */
-    g_ac3ds_fast_text = effective(s, SETTING_FAST_TEXT);                /* m_msg_cursol.c_inc, each frame */
+    g_pc_settings.disable_resetti = effective(s, SETTING_SKIP_RESETTI);
+    g_ac3ds_fast_text = effective(s, SETTING_FAST_TEXT);
     gxr_set_sharp_textures(effective(s, SETTING_SHARP_TEXTURES));
     GxrPictureShape shape = picture_shape(s);
     gxr_set_picture_shape(shape);
-    /* The game culls at the edge of what it shows: m_actor.c and emu64.c take it
-     * from the PC port's window size, here the top screen's shape in Wide. */
+    /* m_actor.c and emu64.c cull at the PC window's edge: in Wide, the top screen's shape. */
     g_pc_window_w = shape == GXR_PICTURE_WIDE ? PC_SCREEN_HEIGHT * GSP_SCREEN_HEIGHT_TOP / GSP_SCREEN_WIDTH
                                               : PC_SCREEN_WIDTH;
     g_pc_window_h = PC_SCREEN_HEIGHT;
@@ -81,8 +77,7 @@ static bool write_file(Settings s)
     return ac3ds_fclose_durable(f) == 0 && written;
 }
 
-/* A change still waiting is written now, as the game may not come back (APT
- * hooks run on the game thread, between frames). */
+/* The game may not come back: APT hooks run on the game thread, between frames. */
 static void on_apt(APT_HookType type, void* param)
 {
     (void)param;
@@ -136,7 +131,7 @@ bool settings3ds_save(void)
     if (written) {
         s_unsaved = debounce_done(s_unsaved);
     } else {
-        s_unsaved = debounce_change(s_unsaved, clock3ds_ms()); /* try again after the delay */
+        s_unsaved = debounce_change(s_unsaved, clock3ds_ms());
     }
     fprintf(stderr, "[settings] %s\n", written ? "saved to " SETTINGS_FILE : SETTINGS_FILE " couldn't be written");
     return written;
