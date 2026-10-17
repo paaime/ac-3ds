@@ -18,7 +18,7 @@ typedef struct {
     uint32_t pending_frames;
 } AudioOutStats;
 
-AudioOutStatus audio_out_init(float sample_rate, float volume);
+AudioOutStatus audio_out_init(float sample_rate, float gain);
 void audio_out_exit(void);
 bool audio_out_is_open(void);
 
@@ -31,7 +31,7 @@ void audio_out_wait(int64_t timeout_ns);
 void audio_out_wake(void);
 
 AudioOutStats audio_out_stats(void);
-/* Loudest sample queued since the last call, 0..32768. */
+/* Loudest sample queued since the last call, after the gain, 0..32768. */
 uint32_t audio_out_take_peak(void);
 const char* audio_out_status_text(AudioOutStatus status);
 const char* audio_out_firmware_source(void);

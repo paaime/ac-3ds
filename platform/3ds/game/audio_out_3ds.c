@@ -5,15 +5,20 @@
 #include "audio_out_3ds.h"
 #include "dsp_firmware_3ds.h"
 #include "ndsp_stream_3ds.h"
+#include "pcm_limiter.h"
 
 #define GAME_CHANNEL       0
 #define SLOT_COUNT         8
 #define SLOT_FRAMES        1024 /* the mixer writes 560 per chunk */
 #define COMPONENT_ALL_MASK 0xFF
+#define UNITY_MIX          1.0f
+#define OUTPUT_CEILING     29204.0f /* -1 dBFS: headroom for the DSP's resampling to its own rate */
 
 static NdspStream s_game;
 static DspFirmware s_firmware; /* kept until ndspExit: ndsp reloads it after sleep/HOME */
 static LightEvent s_dsp_frame;
+static PcmLimiter s_limiter;
+static int16_t s_limited[SLOT_FRAMES * 2];
 static bool s_open;
 
 static void forget_firmware(void)
@@ -29,7 +34,7 @@ static void on_dsp_frame(void* data)
     LightEvent_Signal(&s_dsp_frame);
 }
 
-AudioOutStatus audio_out_init(float sample_rate, float volume)
+AudioOutStatus audio_out_init(float sample_rate, float gain)
 {
     if (s_open) {
         return AUDIO_OUT_OK;
@@ -43,11 +48,12 @@ AudioOutStatus audio_out_init(float sample_rate, float volume)
         forget_firmware();
         return AUDIO_OUT_DSP_FAILED;
     }
-    if (!ndsp_stream_open(&s_game, GAME_CHANNEL, sample_rate, volume, SLOT_COUNT, SLOT_FRAMES)) {
+    if (!ndsp_stream_open(&s_game, GAME_CHANNEL, sample_rate, UNITY_MIX, SLOT_COUNT, SLOT_FRAMES)) {
         ndspExit();
         forget_firmware();
         return AUDIO_OUT_NO_MEMORY;
     }
+    s_limiter = pcm_limiter_create(gain, OUTPUT_CEILING, sample_rate);
     LightEvent_Init(&s_dsp_frame, RESET_ONESHOT);
     ndspSetCallback(on_dsp_frame, NULL);
     s_open = true;
@@ -73,7 +79,12 @@ bool audio_out_is_open(void)
 
 bool audio_out_write(const int16_t* stereo, uint32_t frames)
 {
-    return ndsp_stream_write(&s_game, stereo, frames);
+    if (!s_open || stereo == NULL || frames == 0) {
+        return false;
+    }
+    uint32_t n = frames < SLOT_FRAMES ? frames : SLOT_FRAMES;
+    s_limiter = pcm_limiter_run(s_limiter, s_limited, stereo, n);
+    return ndsp_stream_write(&s_game, s_limited, n);
 }
 
 bool audio_out_wants_chunk(uint32_t target_frames)

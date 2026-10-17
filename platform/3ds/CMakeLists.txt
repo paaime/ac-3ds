@@ -81,6 +81,7 @@ set(P3DS_COMMON_SOURCES
     ${P3DS}/common/nes_pixels.c
     ${P3DS}/common/pad_map.c
     ${P3DS}/common/pcm_level.c
+    ${P3DS}/common/pcm_limiter.c
     ${P3DS}/common/pcm_stereo.c
     ${P3DS}/common/pica_tile.c
     ${P3DS}/common/pot_pad.c
