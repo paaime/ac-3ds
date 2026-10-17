@@ -1,6 +1,6 @@
 #include "pad_map.h"
 
-#include <math.h>
+#include <stdlib.h>
 
 #define STICK_MAX      127
 #define TRIGGER_FULL   255
@@ -20,17 +20,20 @@ static const struct {
     { N3DS_KEY_DRIGHT, GC_PAD_RIGHT },
 };
 
+static int8_t scale_axis(int16_t v)
+{
+    const int span = PAD_MAP_STICK_RANGE - PAD_MAP_STICK_DEAD_ZONE;
+    int tilt = abs(v) < PAD_MAP_STICK_RANGE ? abs(v) : PAD_MAP_STICK_RANGE;
+    if (tilt <= PAD_MAP_STICK_DEAD_ZONE) {
+        return 0;
+    }
+    int scaled = ((tilt - PAD_MAP_STICK_DEAD_ZONE) * STICK_MAX + span / 2) / span;
+    return (int8_t)(v < 0 ? -scaled : scaled);
+}
+
 static StickXY scale_stick(int16_t x, int16_t y)
 {
-    StickXY s = { 0, 0 };
-    float r = sqrtf((float)x * x + (float)y * y);
-    if (r <= PAD_MAP_STICK_DEAD_ZONE) {
-        return s;
-    }
-    float tilt = r < PAD_MAP_STICK_RANGE ? r : PAD_MAP_STICK_RANGE;
-    float k = (tilt - PAD_MAP_STICK_DEAD_ZONE) * STICK_MAX / ((PAD_MAP_STICK_RANGE - PAD_MAP_STICK_DEAD_ZONE) * r);
-    s.x = (int8_t)lroundf(x * k);
-    s.y = (int8_t)lroundf(y * k);
+    StickXY s = { scale_axis(x), scale_axis(y) };
     return s;
 }
 

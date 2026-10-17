@@ -105,14 +105,44 @@ static void test_sticks_reach_full_tilt(void)
 
     s = circle(400, 0);
     CHECK(s.stick_x == 127 && s.stick_y == 0);
-    s = circle(400, -400); /* 127 / sqrt(2) = 89.8 */
-    CHECK(s.stick_x == 90 && s.stick_y == -90);
+    s = circle(400, -400);
+    CHECK(s.stick_x == 127 && s.stick_y == -127);
+}
+
+static void test_a_slightly_crooked_push_reads_straight(void)
+{
+    GcPadState s = circle(PAD_MAP_STICK_DEAD_ZONE, PAD_MAP_STICK_RANGE - 6);
+    CHECK(s.stick_x == 0 && s.stick_y == 121);
+    s = circle(-PAD_MAP_STICK_RANGE + 6, -PAD_MAP_STICK_DEAD_ZONE);
+    CHECK(s.stick_x == -121 && s.stick_y == 0);
+    s = circle(12, -60);
+    CHECK(s.stick_x == 0 && s.stick_y == -39);
+}
+
+static void test_each_axis_rises_from_the_dead_zone(void)
+{
+    GcPadState s = circle(PAD_MAP_STICK_DEAD_ZONE + 1, -100);
+    CHECK(s.stick_x == 1 && s.stick_y == -75);
+    s = circle(110, 110);
+    CHECK(s.stick_x == 85 && s.stick_y == 85);
+    s = circle(-110, 110);
+    CHECK(s.stick_x == -85 && s.stick_y == 85);
+}
+
+static void test_a_diagonal_rest_reads_centred(void)
+{
+    GcPadState s = circle(14, -14);
+    CHECK(s.stick_x == 0 && s.stick_y == 0);
+    s = circle(-PAD_MAP_STICK_DEAD_ZONE, PAD_MAP_STICK_DEAD_ZONE);
+    CHECK(s.stick_x == 0 && s.stick_y == 0);
 }
 
 static void test_cstick_shares_the_dead_zone(void)
 {
     GcPadState s = cstick(12, 12);
     CHECK(s.substick_x == 0 && s.substick_y == 0);
+    s = cstick(PAD_MAP_STICK_DEAD_ZONE, -PAD_MAP_STICK_RANGE);
+    CHECK(s.substick_x == 0 && s.substick_y == -127);
     s = cstick(-PAD_MAP_STICK_RANGE, 0);
     CHECK(s.substick_x == -127 && s.substick_y == 0);
     CHECK(s.stick_x == 0 && s.stick_y == 0);
@@ -126,6 +156,9 @@ int main(void)
     test_sticks_at_rest_read_centred();
     test_sticks_rise_from_the_dead_zone();
     test_sticks_reach_full_tilt();
+    test_a_slightly_crooked_push_reads_straight();
+    test_each_axis_rises_from_the_dead_zone();
+    test_a_diagonal_rest_reads_centred();
     test_cstick_shares_the_dead_zone();
     if (failures != 0) {
         fprintf(stderr, "pad_map: %d check(s) failed\n", failures);
