@@ -98,6 +98,12 @@ Your town is saved in `sdmc:/3ds/ac3ds/save/card_a/DobutsunomoriP_MURA.gci`, wit
 (`.bak1` to `.bak3`). It's a GameCube save file, the same format as Dolphin's GCI exports and the PC port's:
 copy a town in or out to play it elsewhere.
 
+## Roadmap
+
+What's planned for the next versions is in the [milestones](../../milestones): each feature there is an issue
+you can follow. Ideas that aren't planned yet are in [Discussions → Ideas](../../discussions/categories/ideas):
+upvote the ones you'd like most, they help decide what comes next.
+
 ## Not available
 
 - The **Game Boy Advance link**: the island's GBA features, the e-Reader, and visiting another town's island.
@@ -117,13 +123,18 @@ copy a town in or out to play it elsewhere.
 
 ## Feedback
 
-The port is still in development, and every report helps: bugs, crashes, slowdowns, anything that looks wrong,
-and ideas too. Open an [issue](../../issues) with:
+The port is still in development, and every report helps.
 
-- your console (New 3DS, New 3DS XL, New 2DS XL, or an original 3DS or 2DS) and whether you use the `.cia` or
-  the `.3dsx`;
-- what you did and what happened (a photo or a short video helps);
-- the log, `sdmc:/3ds/ac3ds/ac3ds.log` (if possible)
+- **Bugs**: crashes, slowdowns, anything that looks wrong. First look through the [open issues](../../issues): if
+  yours is there, add what you saw to it rather than opening a new one. Otherwise open an
+  [issue](../../issues/new) with:
+  - your console (New 3DS, New 3DS XL, New 2DS XL, or an original 3DS or 2DS) and whether you use the `.cia` or
+    the `.3dsx`;
+  - what you did and what happened (a photo or a short video helps);
+  - the log, `sdmc:/3ds/ac3ds/ac3ds.log` (if possible).
+- **Ideas and feature requests**: post them in [Discussions → Ideas](../../discussions/categories/ideas), or
+  upvote one that's already there.
+- **Questions**: ask in [Discussions → Q&A](../../discussions/categories/q-a).
 
 Pull requests are welcome too.
 
