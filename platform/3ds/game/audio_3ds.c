@@ -16,7 +16,7 @@
 #include "profiler_3ds.h"
 #include "settings_3ds.h"
 
-#define FULL_VOLUME 1.5f /* the console's own slider sets the volume */
+#define FULL_VOLUME 2.0f /* the console's own slider sets the volume */
 #define BYTES_PER_FRAME     4
 #define CHUNK_FRAMES        560 /* jaudio's DAC_SIZE / 2: one mixer call */
 #define THREAD_TARGET       (3 * CHUNK_FRAMES)
