@@ -136,7 +136,7 @@ and `use_gdbstub\default=false` in its `qt-config.ini`) and groups the samples b
 
 ## Changes to the shared code
 
-Eight files outside `platform/3ds/` change, each only under `#ifdef TARGET_3DS`, so the PC build is
+Nine files outside `platform/3ds/` change, each only under `#ifdef TARGET_3DS`, so the PC build is
 unchanged. A new change is a last resort, and gets a row here. The names they share with the port
 (`g_ac3ds_fast_text`, `ac3ds_save_return`, `g_ac3ds_boat_ride`) are declared in the shim header,
 `include/pc_platform.h`.
@@ -144,6 +144,7 @@ unchanged. A new change is a last resort, and gets a row here. The names they sh
 | File | Change | Why |
 |---|---|---|
 | `include/libultra/libultra.h` | Includes `<strings.h>` and skips its own `bcmp`/`bcopy`/`bzero` declarations | newlib declares them with `const` and `size_t`, and both in one file don't compile. The definitions in `pc_misc.c` and `pc_stubs.c` already match newlib's |
+| `pc/src/pc_m_card.c` | Deleting the town or a resident at the title writes the save: the town as the GameCube does, with the save's check data cleared (the old town is rotated into `.bak1`), a resident with the save as it is after the game's own clearing | The PC port's `mCD_EraseLand_bg` and `mCD_SaveErasePlayer_bg` only answer success, so the town or resident came back from the file at the next title screen |
 | `pc/src/pc_save_bswap.c` | `swap_mQst_base` repacks only the quest header's 16 bitfield bits (`common/quest_bits.c`) | ARM GCC puts `time_limit` at byte 2, as the GameCube does. The PC code, written for MinGW's layout (byte 4), zeroed every quest deadline's seconds and minutes at each load and save |
 | `src/game/m_map_ovl.c` | `mMP_3ds_refresh`, `mMP_3ds_draw_grid`, `mMP_3ds_draw_panel`: the map menu's data setup and drawing, with a private state and menu info, through a projection the caller gives. `mMP_3ds_available` (whether the map can show) and `mMP_3ds_select` (the cursor on a tapped acre) | The bottom screen's map is the game's own map code, whose functions are static in that file |
 | `src/game/m_msg_cursol.c_inc` | With "Faster text" on, the message cursor sets `mMsg_STATUS_FLAG_FAST_TEXT` from a message's first letter, as pressing B does | The game's own fast speed, so pauses, choices and voices behave as with B |

@@ -65,6 +65,9 @@
 
 int pc_save_loaded = 0;
 static int pc_save_ready = 0;
+#ifdef TARGET_3DS
+static int pc_save_erasing_land = FALSE;
+#endif
 
 /* --- Travel state --- */
 static Save l_keepSave;                        /* Other town's save data (for Card B visit) */
@@ -310,6 +313,11 @@ static int pc_save_write_gci_to(const char* gci_path, const char* tmp_path) {
     Save_Get(save_exist) = TRUE;
     Save_Get(save_check).version = mFRm_VERSION;
     mFRm_SetSaveCheckData(Save_GetPointer(save_check));
+#ifdef TARGET_3DS
+    if (pc_save_erasing_land) {
+        mFRm_ClearSaveCheckData(Save_GetPointer(save_check));
+    }
+#endif
 
     file_data = (u8*)calloc(1, GCI_FILE_DATA_SIZE);
     if (!file_data) return FALSE;
@@ -1320,9 +1328,28 @@ int mCD_EraseBrokenLand_bg(int* slot) {
     return mCD_TRANS_ERR_NONE;
 }
 
+#ifdef TARGET_3DS
+/* The title's erase choices come before any game start has set pc_save_ready. */
+static int pc_save_write_from_title(int erase_land) {
+    int ready = pc_save_ready;
+    int written;
+
+    pc_save_ready = TRUE;
+    pc_save_erasing_land = erase_land;
+    written = pc_save_write_gci();
+    pc_save_erasing_land = FALSE;
+    pc_save_ready = ready;
+    return written ? mCD_TRANS_ERR_NONE : mCD_TRANS_ERR_IOERROR;
+}
+#endif
+
 int mCD_EraseLand_bg(int* slot) {
     if (slot) *slot = mCD_SLOT_A;
+#ifdef TARGET_3DS
+    return pc_save_write_from_title(TRUE);
+#else
     return mCD_TRANS_ERR_NONE;
+#endif
 }
 
 int mCD_ErasePassportFile_bg(int slot) {
@@ -1334,7 +1361,11 @@ int mCD_ErasePassportFile_bg(int slot) {
 
 int mCD_SaveErasePlayer_bg(int* slot) {
     if (slot) *slot = mCD_SLOT_A;
+#ifdef TARGET_3DS
+    return pc_save_write_from_title(FALSE);
+#else
     return mCD_TRANS_ERR_NONE;
+#endif
 }
 
 int mCD_card_format_bg(s32 chan) {
