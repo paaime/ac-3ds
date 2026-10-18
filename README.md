@@ -155,7 +155,7 @@ cmake --build build/3ds-debug
 make -C platform/3ds/common test && make -C platform/3ds/gfx test
 
 # Release package (.3dsx, .cia, readme, licences) → build/release/ac3ds-<version>.zip
-platform/3ds/tools/make_release.sh --source-url <this repository's address>
+platform/3ds/tools/make_release.sh
 ```
 
 The [3DS port's README](platform/3ds/README.md) covers the details: what the developer build adds, testing in

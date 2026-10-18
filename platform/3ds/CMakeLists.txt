@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(ac3ds VERSION 0.1.1 LANGUAGES C CXX ASM)
+project(ac3ds VERSION 0.1.2 LANGUAGES C CXX ASM)
 
 if(NOT NINTENDO_3DS)
     message(FATAL_ERROR "Configure with -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/3DS.cmake")

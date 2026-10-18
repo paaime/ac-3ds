@@ -1,5 +1,5 @@
 #!/bin/sh
-# Usage: make_release.sh [--source-url URL] [--allow-dirty] (platform/3ds/README.md, "Release build").
+# Usage: make_release.sh [--allow-dirty] (platform/3ds/README.md, "Release build").
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
@@ -8,14 +8,14 @@ RES=$P3DS/res
 DKP=${DEVKITPRO:-/opt/devkitpro}
 BUILD=$ROOT/build/3ds-release
 OUT=$ROOT/build/release
-SOURCE_URL=""
+REPO=paaime/ac-3ds
+SOURCE_URL=https://github.com/$REPO
 ALLOW_DIRTY=0
 
 while [ $# -gt 0 ]; do
     case $1 in
-        --source-url) SOURCE_URL=$2; shift 2 ;;
         --allow-dirty) ALLOW_DIRTY=1; shift ;;
-        *) echo "usage: $0 [--source-url URL] [--allow-dirty]" >&2; exit 2 ;;
+        *) echo "usage: $0 [--allow-dirty]" >&2; exit 2 ;;
     esac
 done
 
@@ -43,9 +43,7 @@ if [ -n "$DIRTY" ]; then
 $DIRTY"
     NAME=$NAME-dirty
 fi
-[ -n "$SOURCE_URL" ] || echo "make_release: no --source-url: README.txt says the address is still to come" >&2
-URL_TEXT=${SOURCE_URL:-"(to be published)"}
-[ -z "$SOURCE_URL" ] || URL_TEXT="$SOURCE_URL (commit $COMMIT)"
+URL_TEXT="$SOURCE_URL (commit $COMMIT)"
 
 echo "== Animal Crossing 3DS $VERSION, commit $COMMIT"
 cmake -S "$P3DS" -B "$BUILD" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$DKP/cmake/3DS.cmake" -DAC3DS_DEBUG=OFF >/dev/null
@@ -86,10 +84,10 @@ echo "== $OUT/$NAME.zip"
 
 QR=$OUT/$NAME-fbi-qr.png
 QR_URL=""
-RELEASE_URL=${SOURCE_URL%/}/releases/download/v$VERSION
+RELEASE_URL=$SOURCE_URL/releases/download/v$VERSION
 rm -f "$QR"
-if [ -z "$SOURCE_URL" ] || [ -n "$DIRTY" ]; then
-    echo "make_release: no FBI QR code without --source-url, or for a test package" >&2
+if [ -n "$DIRTY" ]; then
+    echo "make_release: no FBI QR code for a test package" >&2
 elif QRENCODE=$(command -v "${QRENCODE:-qrencode}"); then
     "$QRENCODE" -o "$QR" -l M -s 8 -m 2 "$RELEASE_URL/ac3ds.cia"
     QR_URL=$RELEASE_URL/$NAME-fbi-qr.png
@@ -106,11 +104,10 @@ else
     sed -e '/^@FBI@$/,/^@END_FBI@$/d' -e "s|@VERSION@|$VERSION|g" "$RES/release-notes.md" > "$NOTES"
 fi
 echo "== $NOTES: write what's new and the known issues"
-if [ -n "$SOURCE_URL" ] && [ -z "$DIRTY" ]; then
-    REPO=${SOURCE_URL%/}
+if [ -z "$DIRTY" ]; then
     FILES="\"$OUT/$NAME.zip\" \"$STAGE/ac3ds.cia\""
     [ -z "$QR_URL" ] || FILES="$FILES \"$QR\""
     echo "== then, with v$VERSION tagged and pushed:"
-    echo "gh release create v$VERSION --repo ${REPO#https://github.com/} --verify-tag \\"
+    echo "gh release create v$VERSION --repo $REPO --verify-tag \\"
     echo "  --title \"Animal Crossing 3DS $VERSION\" --notes-file \"$NOTES\" $FILES"
 fi

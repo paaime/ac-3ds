@@ -79,13 +79,14 @@ make -C platform/3ds/common coverage         # either, with a clang coverage rep
 ### Release build
 
 ```sh
-platform/3ds/tools/make_release.sh --source-url https://…   # → build/release/ac3ds-<version>.zip
+platform/3ds/tools/make_release.sh   # → build/release/ac3ds-<version>.zip
 ```
 
 It configures and builds the player build in its own folder (`build/3ds-release`), makes the `.cia`, and packs
 both with the player's `README.txt` and the licences (`res/`). The zip holds exactly those files, so nothing
-else can slip in. With `--source-url`, it also draws `ac3ds-<version>-fbi-qr.png` for FBI's Remote Install:
-the address of `ac3ds.cia` in the GitHub release tagged `v<version>`. It needs `qrencode` (`brew install
+else can slip in. The readme names the repository, `REPO` at the top of the script (a fork changes it there).
+The script also draws `ac3ds-<version>-fbi-qr.png` for FBI's Remote Install: the address of `ac3ds.cia` in
+the GitHub release tagged `v<version>`. It needs `qrencode` (`brew install
 qrencode`, or `QRENCODE`); without it the script says so and goes on. Then it writes the release notes,
 `ac3ds-<version>-notes.md`, from `res/release-notes.md` (the parts that stay the same, and the QR code's image),
 and prints the `gh release create` command that uploads the zip, `ac3ds.cia` and the QR code with them: write
