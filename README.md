@@ -23,6 +23,8 @@ Supported version: **GAFE01, revision 0 (USA)**.
 - **Options**: skip Mr. Resetti, a continuous camera, sharp textures, a true widescreen view, faster text,
   and more.
 - **Save from anywhere in town** with the gyroid button on the bottom screen. You come back where you were.
+- **Town ordinances**, as in New Leaf: Early Bird, Night Owl, Bell Boom or Beautiful Town, filed at the post
+  office.
 - **NES games** (the NES furniture) at full speed with their sound, through QuickNES.
 - **Saves compatible** with Dolphin and the PC port (GameCube GCI files): bring your town along.
 
@@ -91,6 +93,21 @@ back to your acre after 15 seconds. Two round buttons sit in the top-right corne
 | Bottom screen light saver | The bottom screen goes dark after 10 seconds without a touch. |
 
 Settings are saved in `sdmc:/3ds/ac3ds/settings.ini`.
+
+### Town ordinances
+
+As in New Leaf, your town can have one ordinance. Talk to Pelly at the post office (Phyllis at night) and choose
+**Ordinances**. Filing one costs 20,000 Bells from your wallet; repealing it is free.
+
+| Ordinance | What it does |
+|---|---|
+| Early Bird | Villagers get up, go home and go to bed two hours earlier. Tom Nook's shop opens at 6 AM, except on raffle day (the last of the month), when it opens at 10 as usual. |
+| Night Owl | Villagers keep to a day two hours later. Tom Nook's shop stays open until midnight. |
+| Bell Boom | Tom Nook pays 20% more for what you sell, and everything costs 20% more in his shop and his catalog. Turnips keep their price. |
+| Beautiful Town | No new weeds grow, and no cockroaches move into houses. Weeds already there stay until you pull them. |
+
+An ordinance applies at once and belongs to the town: every resident shares it, and only residents can file or
+repeal one.
 
 ### Saves
 
@@ -169,6 +186,8 @@ the Azahar emulator, the tools the `.cia` needs, and the developer tools.
   GX API. A GX backend on citro3d records that state and turns each draw into PICA200 work. The TEV colour
   combiners become PICA combiners; fog, EFB copies and the screen mapping stay on the GPU.
 - **The bottom screen** is drawn by the game's own map-menu code into a second render target.
+- **Ordinances**: the post office's new lines are written in the game's message format and added to its
+  dialogue at run time; the rest of the text comes from your disc.
 - **Sound**: the game's audio mixer runs on the New 3DS's extra core and feeds the DSP through ndsp.
 - **Disc and saves**: the PC port's disc-image reader and GCI save code, unchanged.
 - **NES games** run on [QuickNES](https://github.com/libretro/QuickNES_Core), the part of it the port needs.

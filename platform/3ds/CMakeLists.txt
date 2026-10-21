@@ -71,6 +71,7 @@ set(P3DS_COMMON_SOURCES
     ${P3DS}/common/dsp_firmware.c
     ${P3DS}/common/feed_rate.c
     ${P3DS}/common/gc_clock.c
+    ${P3DS}/common/gc_msg.c
     ${P3DS}/common/gc_ortho.c
     ${P3DS}/common/gc_pattern.c
     ${P3DS}/common/gc_texture.c
@@ -79,6 +80,8 @@ set(P3DS_COMMON_SOURCES
     ${P3DS}/common/light_timer.c
     ${P3DS}/common/mem_layout.c
     ${P3DS}/common/nes_pixels.c
+    ${P3DS}/common/ordinance.c
+    ${P3DS}/common/ordinance_talk.c
     ${P3DS}/common/pad_map.c
     ${P3DS}/common/pcm_level.c
     ${P3DS}/common/pcm_limiter.c
@@ -158,6 +161,23 @@ set_property(SOURCE "${PC_DIR}/src/pc_disc.c" APPEND PROPERTY COMPILE_DEFINITION
 set_property(SOURCE "${P3DS}/game/ac3ds_main.c" "${P3DS}/game/status_3ds.c" APPEND PROPERTY COMPILE_DEFINITIONS
              "AC3DS_VERSION=\"${PROJECT_VERSION}\"")
 
+# Town ordinances (game/ordinance_3ds.c).
+set(BELL_BOOM_SOURCES
+    ${DECOMP_ROOT}/src/actor/npc/ac_npc_shop_master.c
+    ${DECOMP_ROOT}/src/actor/npc/ac_npc_conv_master.c
+    ${DECOMP_ROOT}/src/actor/npc/ac_npc_super_master.c
+    ${DECOMP_ROOT}/src/actor/npc/ac_npc_depart_master.c
+    ${DECOMP_ROOT}/src/actor/npc/ac_npc_mamedanuki.c
+    ${DECOMP_ROOT}/src/game/m_catalog_ovl.c
+    ${DECOMP_ROOT}/src/actor/ac_shop_design.c
+)
+set_property(SOURCE ${BELL_BOOM_SOURCES} APPEND PROPERTY COMPILE_DEFINITIONS
+             "mSP_ItemNo2ItemPrice=ac3ds_shop_item_price")
+set_property(SOURCE "${DECOMP_ROOT}/src/game/m_start_data_init.c" APPEND PROPERTY COMPILE_DEFINITIONS
+             "mCkRh_DecideNowGokiFamilyCount=ac3ds_cockroach_decide")
+set_property(SOURCE "${DECOMP_ROOT}/src/game/m_msg.c" APPEND PROPERTY COMPILE_DEFINITIONS
+             "mChoice_Load_ChoseStringFromRom=ac3ds_choice_load_string")
+
 # The 3DS main() (game/ac3ds_main.c) calls these.
 set_property(SOURCE "${DECOMP_ROOT}/src/main.c" APPEND PROPERTY COMPILE_DEFINITIONS "main=ac_entry")
 set_property(SOURCE "${DECOMP_ROOT}/src/static/boot.c" APPEND PROPERTY COMPILE_DEFINITIONS "main=boot_main")
@@ -182,7 +202,8 @@ set_source_files_properties(${P3DS_NES_GLUE} PROPERTIES
 # Decomp headers declare static functions these files never define.
 set_property(SOURCE "${P3DS}/game/test_flags_3ds.c" "${P3DS}/game/town_map_3ds.c" "${P3DS}/game/bottom_dl_3ds.c"
              "${P3DS}/game/bottom_ui_3ds.c" "${P3DS}/game/shop_3ds.c" "${P3DS}/game/acres_3ds.c" "${P3DS}/game/quick_save_3ds.c"
-             "${P3DS}/game/weeds_3ds.c" APPEND PROPERTY COMPILE_OPTIONS "-Wno-unused-function")
+             "${P3DS}/game/weeds_3ds.c" "${P3DS}/game/ordinance_3ds.c" "${P3DS}/game/post_office_3ds.c"
+             APPEND PROPERTY COMPILE_OPTIONS "-Wno-unused-function")
 
 set_property(SOURCE ${P3DS_GAME_SOURCES} ${P3DS}/gfx/gx_api.c ${P3DS}/gfx/gx_api_frame.c
              APPEND PROPERTY COMPILE_OPTIONS "-include;${PLATFORM_SHIM}")

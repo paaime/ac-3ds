@@ -14,14 +14,15 @@ platform/3ds/
                   disc_3ds.c), memory (heap_3ds.c), OS and clock (os_3ds.c), frames (vi_3ds.c,
                   frame_3ds.c), input (pad_3ds.c), sound (audio_*.c, ndsp_stream_3ds.c), saves
                   (save_3ds.c), NES games (nes_3ds.cpp, nes_*_3ds.c), settings (settings_3ds.c), the bottom screen
-                  (bottom_*.c, town_map_3ds.c, quick_save_3ds.c), developer tools (trace, profiler,
-                  texture dump, nes_test)
+                  (bottom_*.c, town_map_3ds.c, quick_save_3ds.c), town ordinances (ordinance_3ds.c,
+                  post_office_3ds.c), developer tools (trace, profiler, texture dump, nes_test)
   gfx/            the GX backend emu64 draws through, on citro3d: gx_api*.c (the GX SDK), gx_render.c
                   (draws), gx_bind.c (textures), gx_tev.c (TEV -> PICA combiner), gx_uniforms.c,
                   gx_texcache.c, gx_efb.c (EFB copies), gx_screen.c / gx_uv.c (the screen mapping),
                   gx.v.pica (the vertex shader); developer checks gx_gpu_check.c, gx_debug.c
   common/         pure modules with host tests (settings file, layouts, timers, texture decoding and
-                  tiling, audio bookkeeping, disc checks, text wrapping, ...), plus console_row
+                  tiling, audio bookkeeping, disc checks, text wrapping, ordinances and their dialogue,
+                  the game's message format, ...), plus console_row
   lib/quicknes/   QuickNES, the NES games' emulator: third-party code (LGPL 2.1 or later); its README says
                   what was taken, what changed and what a release must include
   res/            the release's files: the app's icon, the CIA's settings (ac3ds.rsf),
@@ -137,10 +138,10 @@ and `use_gdbstub\default=false` in its `qt-config.ini`) and groups the samples b
 
 ## Changes to the shared code
 
-Nine files outside `platform/3ds/` change, each only under `#ifdef TARGET_3DS`, so the PC build is
+Sixteen files outside `platform/3ds/` change, each only under `#ifdef TARGET_3DS`, so the PC build is
 unchanged. A new change is a last resort, and gets a row here. The names they share with the port
-(`g_ac3ds_fast_text`, `ac3ds_save_return`, `g_ac3ds_boat_ride`) are declared in the shim header,
-`include/pc_platform.h`.
+(`g_ac3ds_fast_text`, `ac3ds_save_return`, `g_ac3ds_boat_ride`, the `ac3ds_ordinance_*`, `ac3ds_msg_*` and
+`ac3ds_post_*` hooks) are declared in the shim header, `include/pc_platform.h`.
 
 | File | Change | Why |
 |---|---|---|
@@ -152,6 +153,12 @@ unchanged. A new change is a last resort, and gets a row here. The names they sh
 | `src/game/m_msg.c` | `mMsg_3ds_draw_nameplate`: the dialogue's name plate, tinted, under the caller's modelview | The Options title on the bottom screen sits in the game's own name plate, whose model and texture are static in `m_msg_data.c_inc` |
 | `src/actor/npc/ac_npc_restart_schedule.c_inc` | The save room's "continue" asks the port whether the player came from the Save button. If so, they go back to the spot they left, as from an NES game, not out of their house's door. Quitting to the title forgets the spot | The Save button saves anywhere in town through the gyroid's own scene change and save room |
 | `src/actor/ac_boat_demo_move.c_inc` | The boat ride sets `g_ac3ds_boat_ride` while it turns borderless acres off for its scripted acre changes | "Continuous camera" is applied every frame, and leaves the switch to the ride meanwhile |
+| `include/m_msg_data.h` | `MSG_MAX` is `AC3DS_MSG_END`: the game's messages, then room for the port's | The ordinance talk is the port's own messages, numbered after the game's last |
+| `src/game/m_msg_main.c_inc` | `mMsg_LoadMsgData` builds the port's messages (`ac3ds_msg_build`) and lets the port patch the game's (`ac3ds_msg_patch` adds Ordinances to the post office clerk's menus, and gives the closed shops' door signs Early Bird's and Night Owl's hours) | The game's text stays on the disc; the port's lines are built in its format at run time |
+| `src/actor/npc/ac_npc_post_girl.c_inc` | The clerk's menu maps the other choices back past Ordinances, and Ordinances hands the talk to the port (`ac3ds_post_ordinance_talk`) until it's over | The ordinance talk, which ends at the clerk's own "anything else?" |
+| `src/game/m_npc_schedule.c`, `src/game/m_npc_walk.c` | Villagers' schedules and walk goals read the time of day through `ac3ds_ordinance_villager_sec` | Early Bird and Night Owl move the villagers' day; the tables wrap at midnight |
+| `src/game/m_shop.c` | The shop's opening and closing hours, the closing music's too, go through `ac3ds_ordinance_shop_open_hour` and `ac3ds_ordinance_shop_close_hour` | Early Bird and Night Owl |
+| `src/game/m_all_grow_ovl.c` | The day's new weeds grow only if `ac3ds_ordinance_weeds_grow()` | Beautiful Town |
 | `src/actor/ac_animal_logo.c` | The PC port's title menu (Start Game, Options, Quit Game) is built only without `TARGET_3DS` (`aAL_PC_TITLE_MENU`): the 3DS keeps the GameCube's blinking "Press START!" | HOME closes the game on 3DS, and the port's options are on the bottom screen |
 
 Everything else compiles unchanged, by other means:
@@ -164,3 +171,18 @@ Everything else compiles unchanged, by other means:
   (→ `game/mtx_3ds.c`), `fclose` in `pc_m_card.c` and `pc_card.c` (→ `game/save_3ds.c`, which flushes first),
   `fread` and `readdir` in `pc_disc.c` (counted reads; hidden files such as macOS's `._` skipped), and
   `pc_misc.c`'s `sins`/`coss` (→ libultra's own table versions, which the 3DS build compiles).
+- For the ordinances (`game/ordinance_3ds.c`, `game/post_office_3ds.c`): `mSP_ItemNo2ItemPrice` in the five shop
+  clerks (`ac_npc_shop_master.c`, `ac_npc_conv_master.c`, `ac_npc_super_master.c`, `ac_npc_depart_master.c`,
+  `ac_npc_mamedanuki.c`), the catalog (`m_catalog_ovl.c`) and the shop's sales toward its next upgrade
+  (`ac_shop_design.c`), so Bell Boom's prices cover buying and selling and leave everyone else's alone; `mCkRh_DecideNowGokiFamilyCount` in `m_start_data_init.c` (Beautiful Town's
+  cockroaches); `mChoice_Load_ChoseStringFromRom` in `m_msg.c`, for the port's choice strings.
+
+## Town ordinances
+
+The town's ordinance is one byte of its save, `Save_t._241A8[0]`, which no game code reads or writes and the PC
+port's load and save keep: 0 for none, otherwise `0xA0` plus the ordinance (`common/ordinance.c`), so any other
+value reads as none. The post office talk (`common/ordinance_talk.c`) is the port's own messages, numbered from
+the game's `0x3F91`, and choice strings numbered from its 607; `common/gc_msg.c` writes them in the game's
+message format and inserts Ordinances into the clerk's menus as they load. Its host tests check that every page
+fits the dialogue window (4 lines of at most 28 characters). Early Bird and Night Owl move the island villager's
+day too, since it goes through the same schedule code. Only residents see Ordinances.

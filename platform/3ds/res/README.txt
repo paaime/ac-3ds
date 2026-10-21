@@ -46,6 +46,18 @@ Two buttons in its top-right corner:
 - Options: the port's settings (skip Mr. Resetti, faster text, the camera,
   sharp textures, widescreen, no weeds, and more). Tap Back for the map.
 
+Town ordinances, as in New Leaf: talk to Pelly at the post office (Phyllis
+at night) and choose Ordinances. Filing one costs 20,000 Bells; repealing it
+is free. One at a time, shared by the whole town, and only residents can
+change it:
+- Early Bird: villagers keep to a day two hours earlier; Tom Nook's shop
+  opens at 6 AM (at 10 on raffle day, as usual).
+- Night Owl: villagers keep to a day two hours later; the shop stays open
+  until midnight.
+- Bell Boom: Tom Nook pays 20% more, and his shop and catalog cost 20% more.
+  Turnips keep their price.
+- Beautiful Town: no new weeds and no cockroaches.
+
 NES games (the NES furniture in your house) run in the middle of the top
 screen; hold L and R and press ZL to leave. Clu Clu Land D is a Famicom Disk
 System game and doesn't run.
@@ -54,7 +66,8 @@ Saves
 -----
 sdmc:/3ds/ac3ds/save/card_a/DobutsunomoriP_MURA.gci, with three backups
 (.bak1 to .bak3). They are GameCube save files, the same as Dolphin's and the
-PC port's: you can carry a town between them.
+PC port's: you can carry a town between them. The ordinance is kept in a
+spare byte of the save, which they ignore.
 
 If something goes wrong, the log is sdmc:/3ds/ac3ds/ac3ds.log.
 

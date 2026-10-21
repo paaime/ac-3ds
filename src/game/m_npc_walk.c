@@ -91,6 +91,9 @@ static mNpcW_GoalDataTable_c* l_looks_goal_table[mNpc_LOOKS_NUM] = {
 };
 
 static mNpcW_GoalData_c* mNpcW_GetGoalDataInfo(int looks, int now_sec) {
+#ifdef TARGET_3DS
+  now_sec = ac3ds_ordinance_villager_sec(now_sec);
+#endif
   int goal_num = l_looks_goal_table[looks]->count;
   mNpcW_GoalData_c* goal_data_save = l_looks_goal_table[looks]->data_p;
   mNpcW_GoalData_c* goal_data = goal_data_save;
