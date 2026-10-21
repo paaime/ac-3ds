@@ -75,6 +75,8 @@ set(P3DS_COMMON_SOURCES
     ${P3DS}/common/gc_ortho.c
     ${P3DS}/common/gc_pattern.c
     ${P3DS}/common/gc_texture.c
+    ${P3DS}/common/look.c
+    ${P3DS}/common/look_talk.c
     ${P3DS}/common/debounce.c
     ${P3DS}/common/disc_check.c
     ${P3DS}/common/light_timer.c
@@ -202,7 +204,8 @@ set_source_files_properties(${P3DS_NES_GLUE} PROPERTIES
 # Decomp headers declare static functions these files never define.
 set_property(SOURCE "${P3DS}/game/test_flags_3ds.c" "${P3DS}/game/town_map_3ds.c" "${P3DS}/game/bottom_dl_3ds.c"
              "${P3DS}/game/bottom_ui_3ds.c" "${P3DS}/game/shop_3ds.c" "${P3DS}/game/acres_3ds.c" "${P3DS}/game/quick_save_3ds.c"
-             "${P3DS}/game/weeds_3ds.c" "${P3DS}/game/ordinance_3ds.c" "${P3DS}/game/post_office_3ds.c"
+             "${P3DS}/game/weeds_3ds.c" "${P3DS}/game/ordinance_3ds.c" "${P3DS}/game/messages_3ds.c"
+             "${P3DS}/game/look_3ds.c"
              APPEND PROPERTY COMPILE_OPTIONS "-Wno-unused-function")
 
 set_property(SOURCE ${P3DS_GAME_SOURCES} ${P3DS}/gfx/gx_api.c ${P3DS}/gfx/gx_api_frame.c

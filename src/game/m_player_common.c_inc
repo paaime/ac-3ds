@@ -8075,10 +8075,17 @@ static int Player_actor_Set_player_sunburn_rankdown(ACTOR* actorx) {
             for (i = 0; i < diff_days; i++) {
                 sunburn->rank--;
 
+#ifdef TARGET_3DS
+                if (sunburn->rank < ac3ds_look_tan_floor()) {
+                    sunburn->rank = ac3ds_look_tan_floor();
+                    break;
+                }
+#else
                 if (sunburn->rank < 0) {
                     sunburn->rank = 0;
                     break;
                 }
+#endif
             }
 
             sunburn->last_changed_date = now_date;

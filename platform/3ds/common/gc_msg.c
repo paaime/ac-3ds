@@ -258,6 +258,11 @@ GcMsg gc_msg_continue(GcMsg m)
     return put_code(put_byte(m, GC_MSG_NEW_LINE), GC_MSG_CONTINUE);
 }
 
+GcMsg gc_msg_continue_to(GcMsg m, uint16_t next_msg)
+{
+    return gc_msg_continue(put_u16(put_code(m, GC_MSG_NEXT_MESSAGE_F), next_msg));
+}
+
 GcMsg gc_msg_last(GcMsg m)
 {
     return put_code(put_byte(m, GC_MSG_NEW_LINE), GC_MSG_LAST);
@@ -351,6 +356,33 @@ size_t gc_msg_insert_choice(const uint8_t* in, size_t len, uint8_t* out, size_t 
             m = put(m, in + i, code_len(in, i, len, code_size));
         }
     }
+    return m.ok ? m.len : 0;
+}
+
+size_t gc_msg_first_page_break(const uint8_t* in, size_t len, GcMsgCodeSize code_size)
+{
+    for (size_t i = 0; i < len;) {
+        size_t n = code_len(in, i, len, code_size);
+        if (n == 0) {
+            return 0;
+        }
+        if (in[i] == GC_MSG_CONTROL && in[i + 1] == GC_MSG_CLEAR) {
+            return i;
+        }
+        i += n;
+    }
+    return 0;
+}
+
+size_t gc_msg_cut_to(const uint8_t* in, size_t cut, uint8_t* out, size_t size, uint16_t next_msg)
+{
+    static const uint8_t k_button_line[] = { GC_MSG_CONTROL, GC_MSG_BUTTON, GC_MSG_NEW_LINE };
+    size_t keep = cut;
+    if (keep >= sizeof(k_button_line) &&
+        memcmp(in + keep - sizeof(k_button_line), k_button_line, sizeof(k_button_line)) == 0) {
+        keep -= sizeof(k_button_line);
+    }
+    GcMsg m = gc_msg_continue_to(put(gc_msg_start(out, size), in, keep), next_msg);
     return m.ok ? m.len : 0;
 }
 
