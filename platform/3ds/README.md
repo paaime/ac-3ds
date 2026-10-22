@@ -156,7 +156,7 @@ header, `include/pc_platform.h`.
 | `src/actor/npc/ac_npc_restart_schedule.c_inc` | The save room's "continue" asks the port whether the player came from the Save button. If so, they go back to the spot they left, as from an NES game, not out of their house's door. Quitting to the title forgets the spot | The Save button saves anywhere in town through the gyroid's own scene change and save room |
 | `src/actor/ac_boat_demo_move.c_inc` | The boat ride sets `g_ac3ds_boat_ride` while it turns borderless acres off for its scripted acre changes | "Continuous camera" is applied every frame, and leaves the switch to the ride meanwhile |
 | `include/m_msg_data.h` | `MSG_MAX` is `AC3DS_MSG_END`: the game's messages, then room for the port's | The ordinance and look talks are the port's own messages, numbered after the game's last |
-| `src/game/m_msg_main.c_inc` | `mMsg_LoadMsgData` builds the port's messages (`ac3ds_msg_build`) and lets the port patch the game's (`ac3ds_msg_patch`: Ordinances in the post office clerk's menus, Change my look in the gyroid's, Rover's last lines jumping to the skin tone question, the closed shops' door signs, Nook's and the Able Sisters', with Early Bird's and Night Owl's hours) | The game's text stays on the disc; the port's lines are built in its format at run time |
+| `src/game/m_msg_main.c_inc` | `mMsg_LoadMsgData` builds the port's messages (`ac3ds_msg_build`) and lets the port patch the game's (`ac3ds_msg_patch`: Ordinances in the post office clerk's menus, Change my look in the gyroid's, the skin tone question in place of Rover's next line after the gender answer, the closed shops' door signs, Nook's and the Able Sisters', with Early Bird's and Night Owl's hours) | The game's text stays on the disc; the port's lines are built in its format at run time |
 | `src/actor/npc/ac_npc_post_girl.c_inc` | The clerk's menu maps the other choices back past Ordinances (`ac3ds_menu_choice`), and Ordinances hands the talk to the port (`ac3ds_post_ordinance_talk`) until it's over | The ordinance talk, which ends at the clerk's own "anything else?" |
 | `src/actor/ac_haniwa_move.c_inc` | The gyroid's menu maps the other choices back past Change my look (`ac3ds_menu_choice`), and Change my look leaves the talk to the port's messages | The look talk, which ends at the gyroid's own "anything else?" |
 | `src/game/m_player_common.c_inc` | A fading tan stops at the tone the player chose (`ac3ds_look_tan_floor`) rather than at none | The chosen skin tone, with summer tans still on top |
@@ -204,5 +204,6 @@ the face palette the game draws). The tone the player chose is a floor the tan f
 player's own data, `Private_c.unused_2412[0]` (0, or `0xC0` plus the tone: `common/look.c`). The talk is
 `common/look_talk.c`: at the gyroid the camera turns to the player's face (Camera2's simple mode) and every step
 redraws it (`mPlib_change_player_face`). On the train the player can't be seen, so Rover offers the tones by
-name instead: his two replies to the money question are cut after their first page to jump to the question, and
-the rest of the reply is played afterwards from a copy (`PORT_MSG_RESUME`).
+name instead, right after the gender answer: the line that follows it (0x2AD8 for a town's first resident, 0x2AD9
+for a later one, from `ac_npc_guide2`) is replaced by the question and played afterwards from a copy
+(`PORT_MSG_RESUME`), so the actor's signal in 0x2AD8 still opens the town's name.

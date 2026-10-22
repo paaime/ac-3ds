@@ -7,7 +7,6 @@
 #include "m_common_data.h"
 #include "m_demo.h"
 #include "m_event.h"
-#include "m_font.h"
 #include "m_msg.h"
 #include "m_msg_enum.h"
 #include "m_player_lib.h"
@@ -23,10 +22,10 @@
 #define TAN_FLOOR_BYTE(p) ((p)->unused_2412[0])
 
 #define GYROID_ANYTHING_ELSE MSG_2343
-/* Rover's two replies to the money question: each one's second page starts the arrival. */
-#define ROVER_MONEY_YES      0x2AD2
-#define ROVER_MONEY_NO       0x2AD4
-#define CODE_CLEAR_LEN       2
+/* Rover's talk right after the gender answer: a first resident's (his actor waits for it to open the town's name)
+   and a later resident's (ac_npc_guide2). */
+#define ROVER_WHERE_HEADED   0x2AD8
+#define ROVER_HEARD_TOWN     0x2AD9
 #define PREVIEW_DISTANCE     260.0f
 #define PREVIEW_HEIGHT       20.0f
 #define PREVIEW_TILT         ((s16)0x9000)
@@ -188,29 +187,21 @@ GcMsgChoice look3ds_menu_choice(int index)
     return none;
 }
 
-static int code_size(const uint8_t* code)
-{
-    return mFont_CodeSize_get((u8*)code);
-}
-
 bool look3ds_patch_rover(int index, unsigned char* buf, int len, int size)
 {
-    if ((index != ROVER_MONEY_YES && index != ROVER_MONEY_NO) || len <= 0 || size <= 0) {
+    if ((index != ROVER_WHERE_HEADED && index != ROVER_HEARD_TOWN) || len <= 0 || size <= 0) {
         return false;
     }
-    size_t cut = gc_msg_first_page_break(buf, (size_t)len, code_size);
-    size_t tail = cut != 0 && (size_t)len > cut + CODE_CLEAR_LEN ? (size_t)len - cut - CODE_CLEAR_LEN : 0;
-    u8 head[mMsg_MSG_BUF_SIZE];
-    size_t head_len = cut != 0 ? gc_msg_cut_to(buf, cut, head, sizeof(head),
-                                               (uint16_t)look_talk_start(LOOK_TALK_ROVER))
-                               : 0;
-    if (head_len == 0 || tail == 0 || head_len > (size_t)size || tail > sizeof(s_look.resume)) {
+    u8 ask[mMsg_MSG_BUF_SIZE];
+    LookTalkState st = { false, 0, GYROID_ANYTHING_ELSE };
+    size_t ask_len = look_talk_build(look_talk_start(LOOK_TALK_ROVER), st, ask, sizeof(ask));
+    if (ask_len == 0 || ask_len > (size_t)size || (size_t)len > sizeof(s_look.resume)) {
         fprintf(stderr, "[look] Rover's message %d left as it is\n", index);
         return false;
     }
-    memcpy(s_look.resume, buf + cut + CODE_CLEAR_LEN, tail);
-    s_look.resume_len = tail;
-    memcpy(buf, head, head_len);
+    memcpy(s_look.resume, buf, (size_t)len);
+    s_look.resume_len = (size_t)len;
+    memcpy(buf, ask, ask_len);
     return true;
 }
 

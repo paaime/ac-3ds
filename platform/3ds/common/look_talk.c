@@ -59,8 +59,8 @@ static const char* const k_limit_lines[2] = {
     "This is the darkest tone\navailable.",
 };
 
-static const char* const k_rover_ask = ROVER_PLAIN "Say, before we pull in...{w8}\nthe sun's real strong out\nthere!{p}" ROVER_HAPPY
-                                                   "So, how would ya describe\nyour skin tone?";
+static const char* const k_rover_ask = ROVER_PLAIN "Say, while I'm gettin' to\nknow ya...{p}" ROVER_HAPPY
+                                                   "How would ya describe your\nskin tone?";
 static const char* const k_rover_group = ROVER_PLAIN "Which one's closest?";
 static const char* const k_rover_set = ROVER_LAUGH "%s it is!{w8}\nLookin' good, {name}!";
 

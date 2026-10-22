@@ -112,37 +112,6 @@ static void test_continue_to_a_message(void)
     CHECK(same(m, want, sizeof(want)));
 }
 
-static void test_the_first_page_break(void)
-{
-    uint8_t msg[] = { C, GC_MSG_DEMO_ORDER_NPC0, 0, 0, 0x1D, 'a', C, GC_MSG_BUTTON, GC_MSG_NEW_LINE,
-                      'b', C, GC_MSG_BUTTON, GC_MSG_NEW_LINE, C, GC_MSG_CLEAR, 'c', C, GC_MSG_CLEAR, 'd',
-                      GC_MSG_NEW_LINE, C, GC_MSG_LAST };
-    CHECK(gc_msg_first_page_break(msg, sizeof(msg), code_size) == 13);
-    uint8_t none[] = { 'a', C, GC_MSG_BUTTON, 'b', C, GC_MSG_LAST };
-    CHECK(gc_msg_first_page_break(none, sizeof(none), code_size) == 0);
-    uint8_t in_args[] = { C, GC_MSG_DEMO_ORDER_NPC0, 0, C, GC_MSG_CLEAR, 'a' };
-    CHECK(gc_msg_first_page_break(in_args, sizeof(in_args), code_size) == 0);
-    uint8_t cut[] = { 'a', C };
-    CHECK(gc_msg_first_page_break(cut, sizeof(cut), code_size) == 0);
-}
-
-static void test_cutting_a_message_to_jump_elsewhere(void)
-{
-    uint8_t msg[] = { 'a', C, GC_MSG_BUTTON, GC_MSG_NEW_LINE, 'b', C, GC_MSG_BUTTON, GC_MSG_NEW_LINE,
-                      C, GC_MSG_CLEAR, 'c' };
-    uint8_t out[BUF_SIZE];
-    size_t len = gc_msg_cut_to(msg, 8, out, sizeof(out), 0x3FB0);
-    const uint8_t want[] = { 'a', C, GC_MSG_BUTTON, GC_MSG_NEW_LINE, 'b',
-                             C, GC_MSG_NEXT_MESSAGE_F, 0x3F, 0xB0, GC_MSG_NEW_LINE, C, GC_MSG_CONTINUE };
-    CHECK(len == sizeof(want) && memcmp(out, want, len) == 0);
-    uint8_t plain[] = { 'a', 'b' };
-    len = gc_msg_cut_to(plain, sizeof(plain), out, sizeof(out), 0x0102);
-    const uint8_t want_plain[] = { 'a', 'b', C, GC_MSG_NEXT_MESSAGE_F, 0x01, 0x02, GC_MSG_NEW_LINE, C,
-                                   GC_MSG_CONTINUE };
-    CHECK(len == sizeof(want_plain) && memcmp(out, want_plain, len) == 0);
-    CHECK(gc_msg_cut_to(msg, 8, out, 8, 0x3FB0) == 0);
-}
-
 static void test_a_colour(void)
 {
     uint8_t buf[BUF_SIZE];
@@ -376,8 +345,6 @@ int main(void)
     test_running_out_of_room();
     test_continue_and_last();
     test_continue_to_a_message();
-    test_the_first_page_break();
-    test_cutting_a_message_to_jump_elsewhere();
     test_a_colour();
     test_a_tag_holding_the_control_byte_is_skipped();
     test_a_menu_ends_the_message();

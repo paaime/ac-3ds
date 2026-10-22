@@ -63,9 +63,6 @@ GcMsg gc_msg_continue_to(GcMsg m, uint16_t next_msg);
 size_t gc_msg_insert_choice(const uint8_t* in, size_t len, uint8_t* out, size_t size, GcMsgChoice choice,
                             GcMsgCodeSize code_size);
 
-size_t gc_msg_first_page_break(const uint8_t* in, size_t len, GcMsgCodeSize code_size);
-size_t gc_msg_cut_to(const uint8_t* in, size_t cut, uint8_t* out, size_t size, uint16_t next_msg);
-
 bool gc_msg_fits(const char* markup, int max_chars, int max_lines);
 
 #endif /* AC3DS_GC_MSG_H */

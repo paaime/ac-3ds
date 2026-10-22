@@ -7,7 +7,7 @@
 
 GcMsgChoice look3ds_menu_choice(int index);
 bool look3ds_msg_build(int index, unsigned char* buf, int size);
-/* Rover's last lines jump to the look talk before the arrival, which the talk ends with. */
+/* Rover asks the skin tone in place of his line after the gender answer, which plays next. */
 bool look3ds_patch_rover(int index, unsigned char* buf, int len, int size);
 void look3ds_frame(void);
 
