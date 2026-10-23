@@ -150,7 +150,11 @@ extern void mNPS_reset_schedule_area(AnmPersonalID_c* anm_id) {
 }
 
 static void mNPS_schedule_manager_sub(mNPS_schedule_c* schedule, int forced_ticks) {
+#ifdef TARGET_3DS
+  int now_sec = ac3ds_ordinance_villager_sec(Common_Get(time.now_sec));
+#else
   int now_sec = Common_Get(time.now_sec);
+#endif
   int count = schedule->data_table->count;
   mNPS_schedule_data_c* schedule_entry = schedule->data_table->sched_data;
 

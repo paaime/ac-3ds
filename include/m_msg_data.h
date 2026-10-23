@@ -19,7 +19,11 @@ extern "C" {
 #define MSG_SONCHO_LIGHTHOUSE_1     0x33f4
 #define MSG_SONCHO_LIGHTHOUSE_2     0x340b
 
+#ifdef TARGET_3DS
+#define MSG_MAX                     AC3DS_MSG_END /* the game's messages, then the 3DS port's */
+#else
 #define MSG_MAX                     0x3F91 /* Maximum message id */
+#endif
 
 #ifdef __cplusplus
 }

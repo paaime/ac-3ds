@@ -328,6 +328,19 @@ static int mMsg_LoadMsgData(mMsg_Data_c* msg_data, int index, int cut) {
         u32 size;
 
         mFRm_set_msg_idx(index);
+#ifdef TARGET_3DS
+        if (index >= AC3DS_MSG_FIRST) {
+            if (ac3ds_msg_build(index, msg_data->text_buf.data, sizeof(msg_data->text_buf.data))) {
+                msg_data->msg_no = index;
+                msg_data->data_loaded = TRUE;
+                msg_data->msg_len = mMsg_Count_MsgData(msg_data->text_buf.data);
+                msg_data->cut = cut;
+                return TRUE;
+            }
+            msg_data->data_loaded = FALSE;
+            return FALSE;
+        }
+#endif
         mMsg_Get_MsgDataAddressAndSize(index, &addr, &size);
 
         if (addr != 0 && size != 0) {
@@ -363,6 +376,9 @@ static int mMsg_LoadMsgData(mMsg_Data_c* msg_data, int index, int cut) {
                     }
                 }
             }
+#endif
+#ifdef TARGET_3DS
+            ac3ds_msg_patch(index, msg_data->text_buf.data, size, sizeof(msg_data->text_buf.data));
 #endif
 
             msg_data->msg_no = index;

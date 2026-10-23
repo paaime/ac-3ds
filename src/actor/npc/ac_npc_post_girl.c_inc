@@ -105,6 +105,14 @@ int aPG_check_destination(Mail_c *mail){
     return res;
 }
 
+#ifdef TARGET_3DS
+static void aPG_ordinance(NPC_POSTGIRL_ACTOR *postgirl, GAME_PLAY *play) {
+    if (ac3ds_post_ordinance_talk()) {
+        postgirl->setup_action(postgirl, play, aPG_ACTION_REPAY_AFTER);
+    }
+}
+#endif
+
 void aPG_ask_for_business(NPC_POSTGIRL_ACTOR *postgirl, GAME_PLAY *play) {
     if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 0x9) != 0 && mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p()) == TRUE) {
         int choice = mChoice_Get_ChoseNum(mChoice_Get_base_window_p());
@@ -117,6 +125,14 @@ void aPG_ask_for_business(NPC_POSTGIRL_ACTOR *postgirl, GAME_PLAY *play) {
             }
             break;
         }
+#ifdef TARGET_3DS
+        choice = ac3ds_post_menu_choice(choice);
+        if (choice == AC3DS_POST_CHOICE_ORDINANCES) {
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 0x9, 0x0);
+            postgirl->process = aPG_ordinance;
+            return;
+        }
+#endif
         switch (choice) {
         case mChoice_CHOICE0:
             if ((postgirl->status & aPG_STATUS_DESK_FULL) != 0) {

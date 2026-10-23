@@ -3140,7 +3140,11 @@ extern void mAGrw_RenewalFgItem_ovl(lbRTC_time_c* now_time, int* deposit_haniwa)
                     mAGrw_SpoilAllPossession(spoil_kabu);
                     mAGrw_ClearDump(&dump_info, &grow_time, now_time);
 
+#ifdef TARGET_3DS
+                    if (Save_Get(clear_grass) == FALSE && ac3ds_ordinance_weeds_grow()) {
+#else
                     if (Save_Get(clear_grass) == FALSE) {
+#endif
                         mAGrw_SetGrass(now_time, &grow_time, l_cancel_ut);
                     }
 

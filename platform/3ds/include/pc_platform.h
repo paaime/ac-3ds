@@ -75,6 +75,25 @@ extern int g_ac3ds_boat_ride;
 extern int ac3ds_save_return(short* x, short* y, short* z, unsigned char* direction);
 extern void ac3ds_save_return_clear(void);
 
+/* The town's ordinance, as the game's code asks for it (game/ordinance_3ds.c). */
+extern int ac3ds_ordinance_villager_sec(int now_sec);
+extern int ac3ds_ordinance_shop_open_hour(int hour);
+extern int ac3ds_ordinance_shop_close_hour(int hour);
+extern int ac3ds_ordinance_tailor_open(int now_sec);
+extern int ac3ds_ordinance_weeds_grow(void);
+
+/* The port's messages follow the game's 0x3F91 (m_msg_data.h's MSG_MAX, raised to AC3DS_MSG_END). */
+#define AC3DS_MSG_FIRST 0x3F91
+#define AC3DS_MSG_END   (AC3DS_MSG_FIRST + 0x40)
+extern int ac3ds_msg_build(int index, unsigned char* buf, int size);
+extern void ac3ds_msg_patch(int index, unsigned char* buf, int len, int size);
+
+/* Pelly's counter menu once ac3ds_msg_patch gave it Ordinances (game/post_office_3ds.c). */
+#define AC3DS_POST_CHOICE_ORDINANCES 6 /* past mChoice_CHOICE5 */
+extern int ac3ds_post_menu_choice(int choice);
+/* TRUE once the ordinance talk is over: Pelly's "anything else?" comes next. */
+extern int ac3ds_post_ordinance_talk(void);
+
 /* The 640x480 EFB the game projects for. */
 extern int g_pc_window_w;
 extern int g_pc_window_h;

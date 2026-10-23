@@ -1720,20 +1720,32 @@ extern lbRTC_hour_t mSP_GetShopOpenTime() {
         lbRTC_GetDaysByMonth(Common_Get(time.rtc_time).year, Common_Get(time.rtc_time).month)) {
         return 10; // lottery starts at 10AM
     } else {
+#ifdef TARGET_3DS
+        return ac3ds_ordinance_shop_open_hour(shop_open_time_table[shop_level]);
+#else
         return shop_open_time_table[shop_level];
+#endif
     }
 }
 
 extern lbRTC_hour_t mSP_GetShopCloseTime() {
     static lbRTC_hour_t shop_close_time_table[mSP_SHOP_TYPE_NUM] = { 22, 23, 22, 22 };
 
+#ifdef TARGET_3DS
+    return ac3ds_ordinance_shop_close_hour(shop_close_time_table[mSP_GetShopLevel()]);
+#else
     return shop_close_time_table[mSP_GetShopLevel()];
+#endif
 }
 
 extern lbRTC_hour_t mSP_GetShopCloseTime_Bgm() {
     static lbRTC_hour_t shop_close_time_table[mSP_SHOP_TYPE_NUM] = { 22, 23, 22, 22 };
 
+#ifdef TARGET_3DS
+    return ac3ds_ordinance_shop_close_hour(shop_close_time_table[mSP_GetShopLevel()]);
+#else
     return shop_close_time_table[mSP_GetShopLevel()];
+#endif
 }
 
 extern int mSP_InRenewal() {
