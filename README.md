@@ -101,8 +101,8 @@ As in New Leaf, your town can have one ordinance. Talk to Pelly at the post offi
 
 | Ordinance | What it does |
 |---|---|
-| Early Bird | Villagers get up, go home and go to bed two hours earlier. Tom Nook's shop opens at 6 AM, except on raffle day (the last of the month), when it opens at 10 as usual. |
-| Night Owl | Villagers keep to a day two hours later. Tom Nook's shop stays open until midnight. |
+| Early Bird | Villagers get up, go home and go to bed two hours earlier. Tom Nook's shop and the Able Sisters open at 6 AM; on raffle day (the last of the month) Nook's opens at 10 as usual. |
+| Night Owl | Villagers keep to a day two hours later. Tom Nook's shop stays open until midnight, and the Able Sisters until 4 AM. |
 | Bell Boom | Tom Nook pays 20% more for what you sell, and everything costs 20% more in his shop and his catalog. Turnips keep their price. |
 | Beautiful Town | No new weeds grow, and no cockroaches move into houses. Weeds already there stay until you pull them. |
 

@@ -3,8 +3,11 @@
 #define SAVE_TAG      0xA0u
 #define SAVE_TAG_MASK 0xF0u
 #define SAVE_VALUE    0x0Fu
-#define DAY_SEC       (24 * 60 * 60)
+#define HOUR_SEC      (60 * 60)
+#define DAY_SEC       (24 * HOUR_SEC)
 #define PERCENT       100u
+
+_Static_assert(ORDINANCE_TAILOR_LATE_CLOSE_HOUR < ORDINANCE_EARLY_OPEN_HOUR, "the tailor's hours wrap past midnight");
 
 static bool valid(Ordinance o)
 {
@@ -34,14 +37,16 @@ static int shift_sec(Ordinance o)
     }
 }
 
+static int in_a_day(int sec)
+{
+    int wrapped = sec % DAY_SEC;
+    return wrapped < 0 ? wrapped + DAY_SEC : wrapped;
+}
+
 int ordinance_villager_sec(Ordinance o, int now_sec)
 {
     int shift = shift_sec(o);
-    if (shift == 0) {
-        return now_sec;
-    }
-    int sec = (now_sec % DAY_SEC + shift) % DAY_SEC;
-    return sec < 0 ? sec + DAY_SEC : sec;
+    return shift == 0 ? now_sec : in_a_day(now_sec % DAY_SEC + shift);
 }
 
 int ordinance_shop_open_hour(Ordinance o, int hour)
@@ -52,6 +57,22 @@ int ordinance_shop_open_hour(Ordinance o, int hour)
 int ordinance_shop_close_hour(Ordinance o, int hour)
 {
     return o == ORDINANCE_NIGHT_OWL && hour < ORDINANCE_LATE_CLOSE_HOUR ? ORDINANCE_LATE_CLOSE_HOUR : hour;
+}
+
+int ordinance_tailor_open_hour(Ordinance o)
+{
+    return ordinance_shop_open_hour(o, ORDINANCE_TAILOR_OPEN_HOUR);
+}
+
+int ordinance_tailor_close_hour(Ordinance o)
+{
+    return o == ORDINANCE_NIGHT_OWL ? ORDINANCE_TAILOR_LATE_CLOSE_HOUR : ORDINANCE_TAILOR_CLOSE_HOUR;
+}
+
+bool ordinance_tailor_open(Ordinance o, int now_sec)
+{
+    int sec = in_a_day(now_sec);
+    return sec < ordinance_tailor_close_hour(o) * HOUR_SEC || sec >= ordinance_tailor_open_hour(o) * HOUR_SEC;
 }
 
 uint32_t ordinance_item_price(Ordinance o, uint32_t price)

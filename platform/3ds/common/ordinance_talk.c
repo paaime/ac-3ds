@@ -46,8 +46,6 @@ typedef struct {
     const char* name;
     const char* status;
     char fee[VALUE_MAX];
-    char pct[VALUE_MAX];
-    char open[VALUE_MAX];
 } Values;
 
 typedef struct {
@@ -76,22 +74,22 @@ static const char* const k_status_some[SPEAKERS] = {
 
 static const char* const k_about[KINDS][SPEAKERS] = {
     {
-        EXPR_SMILE "The Early Bird Ordinance!{p}" EXPR_PLAIN "Everyone in town gets up\ntwo hours earlier, and Tom\n"
-                   "Nook's shop opens at $open.{p}",
-        EXPR_BORED "Early Bird, huh?{p}" EXPR_ANNOYED "Everybody gets up two hours\nearlier, and Nook opens his\n"
-                   "shop at $open.\n{(}Who even wants that?{)}{p}",
+        EXPR_SMILE "The Early Bird Ordinance!{p}" EXPR_PLAIN "Everyone in town rises with\nthe sun, and the shops open\n"
+                   "early to match.{p}",
+        EXPR_BORED "Early Bird, huh?{p}" EXPR_ANNOYED "Everybody's up at the crack\nof dawn, and the shops open\n"
+                   "early.\n{(}Who even wants that?{)}{p}",
     },
     {
-        EXPR_SMILE "The Night Owl Ordinance!{p}" EXPR_PLAIN "Everyone in town stays up\ntwo hours later, and Tom\n"
-                   "Nook's shop stays open\nuntil midnight.{p}",
-        EXPR_BORED "Night Owl, huh?{p}" EXPR_ANNOYED "Everybody stays up two hours\nlater, and Nook keeps his\n"
-                   "shop open until midnight.\n{(}Lucky him.{)}{p}",
+        EXPR_SMILE "The Night Owl Ordinance!{p}" EXPR_PLAIN "Everyone in town stays up\nuntil the wee hours, and the\n"
+                   "shops stay open late, too.{p}",
+        EXPR_BORED "Night Owl, huh?{p}" EXPR_ANNOYED "Everybody's up half the\nnight, and the shops stay\n"
+                   "open late.\n{(}Lucky them.{)}{p}",
     },
     {
-        EXPR_SMILE "The Bell Boom Ordinance!{p}" EXPR_PLAIN "Tom Nook pays $pct more for\nanything you sell...{w10} but\n"
-                   "his shop's prices go up\n$pct, too.{p}",
-        EXPR_BORED "Bell Boom, huh?{p}" EXPR_ANNOYED "Nook pays $pct more for your\njunk, but everything in his\n"
-                   "shop costs $pct more, too.\n{(}Same old Nook...{)}{p}",
+        EXPR_SMILE "The Bell Boom Ordinance!{p}" EXPR_PLAIN "Tom Nook pays more for\nanything you sell...{w10} but\n"
+                   "his prices go up, too.{p}",
+        EXPR_BORED "Bell Boom, huh?{p}" EXPR_ANNOYED "Nook pays more for your\njunk, but everything in his\n"
+                   "shop costs more, too.\n{(}Same old Nook...{)}{p}",
     },
     {
         EXPR_SMILE "Ah, the Beautiful Town\nOrdinance!{p}" EXPR_PLAIN "No new weeds will sprout,\n"
@@ -185,16 +183,14 @@ static Values values(const char* name, const char* status)
     v.name = name;
     v.status = status;
     snprintf(v.fee, sizeof(v.fee), "%u,%03u", ORDINANCE_FEE / BELLS_GROUP, ORDINANCE_FEE % BELLS_GROUP);
-    snprintf(v.pct, sizeof(v.pct), "%d%%", ORDINANCE_BELL_BOOM_PERCENT);
-    snprintf(v.open, sizeof(v.open), "%d AM", ORDINANCE_EARLY_OPEN_HOUR);
     return v;
 }
 
 /* An unknown key keeps its '$', which gc_msg refuses: a typo in a template fails the build of its message. */
 static const char* value_of(const Values* v, const char* key, size_t* key_len)
 {
-    static const char* const keys[] = { "name", "status", "fee", "pct", "open", "" };
-    const char* found[] = { v->name, v->status, v->fee, v->pct, v->open, "$" };
+    static const char* const keys[] = { "name", "status", "fee", "" };
+    const char* found[] = { v->name, v->status, v->fee, "$" };
     size_t i = 0;
     while (strncmp(key, keys[i], strlen(keys[i])) != 0) {
         i++;

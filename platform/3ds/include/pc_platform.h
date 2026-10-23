@@ -79,6 +79,7 @@ extern void ac3ds_save_return_clear(void);
 extern int ac3ds_ordinance_villager_sec(int now_sec);
 extern int ac3ds_ordinance_shop_open_hour(int hour);
 extern int ac3ds_ordinance_shop_close_hour(int hour);
+extern int ac3ds_ordinance_tailor_open(int now_sec);
 extern int ac3ds_ordinance_weeds_grow(void);
 
 /* The port's messages follow the game's 0x3F91 (m_msg_data.h's MSG_MAX, raised to AC3DS_MSG_END). */

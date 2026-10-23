@@ -11,7 +11,9 @@
 #include "ordinance_3ds.h"
 #include "ordinance_talk.h"
 
-#define SIGN_SIZE 256
+#define SIGN_SIZE          256
+/* The Able Sisters' door when they're closed (aNW_talk_door_demo_ct). */
+#define TAILOR_CLOSED_SIGN MSG_2010
 
 /* A spare byte of the town's save that no game code reads or writes; the PC port's load and save keep it. */
 #define ORDINANCE_SAVE_BYTE (Save_Get(_241A8)[0])
@@ -42,6 +44,11 @@ int ac3ds_ordinance_shop_close_hour(int hour)
     return ordinance_shop_close_hour(ordinance3ds_get(), hour);
 }
 
+int ac3ds_ordinance_tailor_open(int now_sec)
+{
+    return ordinance_tailor_open(ordinance3ds_get(), now_sec);
+}
+
 int ac3ds_ordinance_weeds_grow(void)
 {
     return ordinance_grows_weeds(ordinance3ds_get());
@@ -52,19 +59,33 @@ u32 ac3ds_shop_item_price(mActor_name_t item_no)
     return ordinance_item_price(ordinance3ds_get(), mSP_ItemNo2ItemPrice(item_no));
 }
 
-bool ordinance3ds_sign(int index, unsigned char* buf, int size)
+static bool shop_sign(int index)
 {
     static const int k_signs[] = { MSG_SHOP_OPEN, MSG_SHOP_CLOSED_NORMAL, MSG_SHOP2_CLOSED_NORMAL, MSG_SHOP2_OPEN };
-    bool sign = false;
     for (size_t i = 0; i < sizeof(k_signs) / sizeof(k_signs[0]); i++) {
-        sign = sign || index == k_signs[i];
+        if (index == k_signs[i]) {
+            return true;
+        }
     }
-    if (!sign) {
+    return false;
+}
+
+bool ordinance3ds_sign(int index, unsigned char* buf, int size)
+{
+    Ordinance o = ordinance3ds_get();
+    int open_hour;
+    int close_hour;
+    if (shop_sign(index)) {
+        open_hour = mSP_GetShopOpenTime();
+        close_hour = mSP_GetShopCloseTime();
+    } else if (index == TAILOR_CLOSED_SIGN) {
+        open_hour = ordinance_tailor_open_hour(o);
+        close_hour = ordinance_tailor_close_hour(o);
+    } else {
         return false;
     }
     u8 built[SIGN_SIZE];
-    size_t len = ordinance_talk_sign(ordinance3ds_get(), mSP_GetShopOpenTime(), mSP_GetShopCloseTime(), built,
-                                     sizeof(built));
+    size_t len = ordinance_talk_sign(o, open_hour, close_hour, built, sizeof(built));
     if (len == 0 || (int)len > size) {
         return false;
     }

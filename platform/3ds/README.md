@@ -138,7 +138,7 @@ and `use_gdbstub\default=false` in its `qt-config.ini`) and groups the samples b
 
 ## Changes to the shared code
 
-Sixteen files outside `platform/3ds/` change, each only under `#ifdef TARGET_3DS`, so the PC build is
+Seventeen files outside `platform/3ds/` change, each only under `#ifdef TARGET_3DS`, so the PC build is
 unchanged. A new change is a last resort, and gets a row here. The names they share with the port
 (`g_ac3ds_fast_text`, `ac3ds_save_return`, `g_ac3ds_boat_ride`, the `ac3ds_ordinance_*`, `ac3ds_msg_*` and
 `ac3ds_post_*` hooks) are declared in the shim header, `include/pc_platform.h`.
@@ -154,10 +154,11 @@ unchanged. A new change is a last resort, and gets a row here. The names they sh
 | `src/actor/npc/ac_npc_restart_schedule.c_inc` | The save room's "continue" asks the port whether the player came from the Save button. If so, they go back to the spot they left, as from an NES game, not out of their house's door. Quitting to the title forgets the spot | The Save button saves anywhere in town through the gyroid's own scene change and save room |
 | `src/actor/ac_boat_demo_move.c_inc` | The boat ride sets `g_ac3ds_boat_ride` while it turns borderless acres off for its scripted acre changes | "Continuous camera" is applied every frame, and leaves the switch to the ride meanwhile |
 | `include/m_msg_data.h` | `MSG_MAX` is `AC3DS_MSG_END`: the game's messages, then room for the port's | The ordinance talk is the port's own messages, numbered after the game's last |
-| `src/game/m_msg_main.c_inc` | `mMsg_LoadMsgData` builds the port's messages (`ac3ds_msg_build`) and lets the port patch the game's (`ac3ds_msg_patch` adds Ordinances to the post office clerk's menus, and gives the closed shops' door signs Early Bird's and Night Owl's hours) | The game's text stays on the disc; the port's lines are built in its format at run time |
+| `src/game/m_msg_main.c_inc` | `mMsg_LoadMsgData` builds the port's messages (`ac3ds_msg_build`) and lets the port patch the game's (`ac3ds_msg_patch` adds Ordinances to the post office clerk's menus, and gives the closed shops' door signs, Nook's and the Able Sisters', Early Bird's and Night Owl's hours) | The game's text stays on the disc; the port's lines are built in its format at run time |
 | `src/actor/npc/ac_npc_post_girl.c_inc` | The clerk's menu maps the other choices back past Ordinances, and Ordinances hands the talk to the port (`ac3ds_post_ordinance_talk`) until it's over | The ordinance talk, which ends at the clerk's own "anything else?" |
 | `src/game/m_npc_schedule.c`, `src/game/m_npc_walk.c` | Villagers' schedules and walk goals read the time of day through `ac3ds_ordinance_villager_sec` | Early Bird and Night Owl move the villagers' day; the tables wrap at midnight |
 | `src/game/m_shop.c` | The shop's opening and closing hours, the closing music's too, go through `ac3ds_ordinance_shop_open_hour` and `ac3ds_ordinance_shop_close_hour` | Early Bird and Night Owl |
+| `src/actor/ac_needlework_shop_move.c_inc` | The Able Sisters' door and lights ask `ac3ds_ordinance_tailor_open` whether the shop is open | Early Bird and Night Owl |
 | `src/game/m_all_grow_ovl.c` | The day's new weeds grow only if `ac3ds_ordinance_weeds_grow()` | Beautiful Town |
 | `src/actor/ac_animal_logo.c` | The PC port's title menu (Start Game, Options, Quit Game) is built only without `TARGET_3DS` (`aAL_PC_TITLE_MENU`): the 3DS keeps the GameCube's blinking "Press START!" | HOME closes the game on 3DS, and the port's options are on the bottom screen |
 

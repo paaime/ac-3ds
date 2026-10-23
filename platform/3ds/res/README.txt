@@ -51,9 +51,9 @@ at night) and choose Ordinances. Filing one costs 20,000 Bells; repealing it
 is free. One at a time, shared by the whole town, and only residents can
 change it:
 - Early Bird: villagers keep to a day two hours earlier; Tom Nook's shop
-  opens at 6 AM (at 10 on raffle day, as usual).
-- Night Owl: villagers keep to a day two hours later; the shop stays open
-  until midnight.
+  and the Able Sisters open at 6 AM (Nook's at 10 on raffle day, as usual).
+- Night Owl: villagers keep to a day two hours later; Tom Nook's shop stays
+  open until midnight, the Able Sisters until 4 AM.
 - Bell Boom: Tom Nook pays 20% more, and his shop and catalog cost 20% more.
   Turnips keep their price.
 - Beautiful Town: no new weeds and no cockroaches.

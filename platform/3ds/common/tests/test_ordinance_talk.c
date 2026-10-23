@@ -244,6 +244,25 @@ static void test_the_door_sign_shows_the_ordinances_hours(void)
     CHECK(sign_fits(bytes, len));
     len = ordinance_talk_sign(ORDINANCE_EARLY_BIRD, 12, 13, bytes, sizeof(bytes));
     CHECK(len > 0 && has(bytes, len, "noon") && has(bytes, len, "1:00 p.m."));
+    len = ordinance_talk_sign(ORDINANCE_NIGHT_OWL, 7, 4, bytes, sizeof(bytes));
+    CHECK(len > 0 && has(bytes, len, "7:00 a.m.") && has(bytes, len, "4:00 a.m."));
+    CHECK(sign_fits(bytes, len));
+}
+
+static void test_the_descriptions_give_no_numbers(void)
+{
+    OrdinanceTalkState st = state(ORDINANCE_NONE, RICH);
+    OrdinanceTalkSpeaker speakers[] = { ORDINANCE_TALK_PELLY, ORDINANCE_TALK_PHYLLIS };
+    const char* numbers[] = { " AM", " PM", "midnight", "%" };
+    for (size_t i = 0; i < sizeof(speakers) / sizeof(speakers[0]); i++) {
+        for (int o = ORDINANCE_EARLY_BIRD; o < ORDINANCE_COUNT; o++) {
+            for (size_t n = 0; n < sizeof(numbers) / sizeof(numbers[0]); n++) {
+                CHECK(!markup_has(about(speakers[i], (Ordinance)o), st, numbers[n]));
+            }
+        }
+        CHECK(markup_has(about(speakers[i], ORDINANCE_EARLY_BIRD), st, "shops open"));
+        CHECK(markup_has(about(speakers[i], ORDINANCE_NIGHT_OWL), st, "shops stay"));
+    }
 }
 
 static void test_other_ordinances_leave_the_games_sign(void)
@@ -269,6 +288,7 @@ int main(void)
     test_choice_strings();
     test_the_door_sign_shows_the_ordinances_hours();
     test_other_ordinances_leave_the_games_sign();
+    test_the_descriptions_give_no_numbers();
     if (failures != 0) {
         fprintf(stderr, "ordinance_talk: %d check(s) failed\n", failures);
         return 1;

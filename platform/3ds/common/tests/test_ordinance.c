@@ -97,6 +97,44 @@ static void test_beautiful_town_stops_weeds_and_cockroaches(void)
     }
 }
 
+static void test_the_able_sisters_keep_their_hours(void)
+{
+    CHECK(ordinance_tailor_open_hour(ORDINANCE_NONE) == ORDINANCE_TAILOR_OPEN_HOUR);
+    CHECK(ordinance_tailor_close_hour(ORDINANCE_NONE) == ORDINANCE_TAILOR_CLOSE_HOUR);
+    CHECK(ordinance_tailor_open(ORDINANCE_NONE, ORDINANCE_TAILOR_OPEN_HOUR * HOUR_SEC));
+    CHECK(!ordinance_tailor_open(ORDINANCE_NONE, ORDINANCE_TAILOR_OPEN_HOUR * HOUR_SEC - 1));
+    CHECK(!ordinance_tailor_open(ORDINANCE_NONE, ORDINANCE_TAILOR_CLOSE_HOUR * HOUR_SEC));
+    CHECK(ordinance_tailor_open(ORDINANCE_NONE, ORDINANCE_TAILOR_CLOSE_HOUR * HOUR_SEC - 1));
+    CHECK(ordinance_tailor_open(ORDINANCE_BELL_BOOM, 12 * HOUR_SEC));
+    CHECK(!ordinance_tailor_open(ORDINANCE_BEAUTIFUL_TOWN, 3 * HOUR_SEC));
+}
+
+static void test_early_bird_opens_the_able_sisters_early(void)
+{
+    CHECK(ordinance_tailor_open_hour(ORDINANCE_EARLY_BIRD) == ORDINANCE_EARLY_OPEN_HOUR);
+    CHECK(ordinance_tailor_close_hour(ORDINANCE_EARLY_BIRD) == ORDINANCE_TAILOR_CLOSE_HOUR);
+    CHECK(ordinance_tailor_open(ORDINANCE_EARLY_BIRD, ORDINANCE_EARLY_OPEN_HOUR * HOUR_SEC));
+    CHECK(!ordinance_tailor_open(ORDINANCE_EARLY_BIRD, ORDINANCE_EARLY_OPEN_HOUR * HOUR_SEC - 1));
+    CHECK(!ordinance_tailor_open(ORDINANCE_EARLY_BIRD, ORDINANCE_TAILOR_CLOSE_HOUR * HOUR_SEC));
+}
+
+static void test_night_owl_keeps_the_able_sisters_open_late(void)
+{
+    CHECK(ordinance_tailor_open_hour(ORDINANCE_NIGHT_OWL) == ORDINANCE_TAILOR_OPEN_HOUR);
+    CHECK(ordinance_tailor_close_hour(ORDINANCE_NIGHT_OWL) == ORDINANCE_TAILOR_LATE_CLOSE_HOUR);
+    CHECK(ordinance_tailor_open(ORDINANCE_NIGHT_OWL, ORDINANCE_TAILOR_LATE_CLOSE_HOUR * HOUR_SEC - 1));
+    CHECK(!ordinance_tailor_open(ORDINANCE_NIGHT_OWL, ORDINANCE_TAILOR_LATE_CLOSE_HOUR * HOUR_SEC));
+    CHECK(!ordinance_tailor_open(ORDINANCE_NIGHT_OWL, ORDINANCE_TAILOR_OPEN_HOUR * HOUR_SEC - 1));
+    CHECK(ordinance_tailor_open(ORDINANCE_NIGHT_OWL, DAY_SEC - 1));
+}
+
+static void test_the_able_sisters_hours_keep_odd_input_in_a_day(void)
+{
+    CHECK(ordinance_tailor_open(ORDINANCE_NONE, DAY_SEC + 12 * HOUR_SEC));
+    CHECK(!ordinance_tailor_open(ORDINANCE_NONE, DAY_SEC + 3 * HOUR_SEC));
+    CHECK(ordinance_tailor_open(ORDINANCE_NONE, -HOUR_SEC));
+}
+
 static void test_the_fee(void)
 {
     CHECK(!ordinance_affordable(0));
@@ -125,6 +163,10 @@ int main(void)
     test_villager_time_keeps_odd_input_in_a_day();
     test_early_bird_opens_shops_early();
     test_night_owl_closes_shops_late();
+    test_the_able_sisters_keep_their_hours();
+    test_early_bird_opens_the_able_sisters_early();
+    test_night_owl_keeps_the_able_sisters_open_late();
+    test_the_able_sisters_hours_keep_odd_input_in_a_day();
     test_bell_boom_raises_prices();
     test_beautiful_town_stops_weeds_and_cockroaches();
     test_the_fee();
