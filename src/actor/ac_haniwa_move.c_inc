@@ -273,7 +273,16 @@ static void aHNW_talk_with_master(HANIWA_ACTOR* haniwa, GAME* game) {
     if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) && mMsg_Check_MainNormalContinue(msg_win) == TRUE) {
         int action = -1;
 
+#ifdef TARGET_3DS
+        int choice = ac3ds_menu_choice(mChoice_GET_CHOSENUM());
+        if (choice == AC3DS_MENU_CHOICE_ADDED) {
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+            return;
+        }
+        switch (choice) {
+#else
         switch (mChoice_GET_CHOSENUM()) {
+#endif
             case mChoice_CHOICE0: {
                 action = aHNW_ACTION_SAVE_CHECK;
                 break;

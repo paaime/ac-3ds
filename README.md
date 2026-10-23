@@ -25,6 +25,8 @@ Supported version: **GAFE01, revision 0 (USA)**.
 - **Save from anywhere in town** with the gyroid button on the bottom screen. You come back where you were.
 - **Town ordinances**, as in New Leaf: Early Bird, Night Owl, Bell Boom or Beautiful Town, filed at the post
   office.
+- **Your look**: choose your skin tone on the train, and change your face and skin tone any time at your
+  house's gyroid.
 - **NES games** (the NES furniture) at full speed with their sound, through QuickNES.
 - **Saves compatible** with Dolphin and the PC port (GameCube GCI files): bring your town along.
 
@@ -108,6 +110,15 @@ As in New Leaf, your town can have one ordinance. Talk to Pelly at the post offi
 
 An ordinance applies at once and belongs to the town: every resident shares it, and only residents can file or
 repeal one.
+
+### Your look
+
+- **On the train**, Rover asks how you'd describe your skin tone, from Fair to Deep brown, before you arrive.
+- **At your house's gyroid**, choose **Change my look**: try the faces one by one, and the skin tone lighter
+  or darker, as the camera turns to show you. **Put it back** undoes a change.
+
+Summer sun still tans you, and the tan fades back to the tone you chose, never lighter. Your look belongs to
+your resident and goes with them.
 
 ### Saves
 

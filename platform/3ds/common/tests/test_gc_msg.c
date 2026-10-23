@@ -104,6 +104,14 @@ static void test_an_aside_is_grey_and_unvoiced_on_each_line(void)
     CHECK(same(m, want, sizeof(want)));
 }
 
+static void test_continue_to_a_message(void)
+{
+    uint8_t buf[BUF_SIZE];
+    GcMsg m = gc_msg_continue_to(gc_msg_text(gc_msg_start(buf, sizeof(buf)), "a"), 0x0927);
+    const uint8_t want[] = { 'a', C, GC_MSG_NEXT_MESSAGE_F, 0x09, 0x27, GC_MSG_NEW_LINE, C, GC_MSG_CONTINUE };
+    CHECK(same(m, want, sizeof(want)));
+}
+
 static void test_a_colour(void)
 {
     uint8_t buf[BUF_SIZE];
@@ -336,6 +344,7 @@ int main(void)
     test_text_appends_and_failure_sticks();
     test_running_out_of_room();
     test_continue_and_last();
+    test_continue_to_a_message();
     test_a_colour();
     test_a_tag_holding_the_control_byte_is_skipped();
     test_a_menu_ends_the_message();

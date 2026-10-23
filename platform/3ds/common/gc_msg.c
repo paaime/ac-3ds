@@ -258,6 +258,11 @@ GcMsg gc_msg_continue(GcMsg m)
     return put_code(put_byte(m, GC_MSG_NEW_LINE), GC_MSG_CONTINUE);
 }
 
+GcMsg gc_msg_continue_to(GcMsg m, uint16_t next_msg)
+{
+    return gc_msg_continue(put_u16(put_code(m, GC_MSG_NEXT_MESSAGE_F), next_msg));
+}
+
 GcMsg gc_msg_last(GcMsg m)
 {
     return put_code(put_byte(m, GC_MSG_NEW_LINE), GC_MSG_LAST);

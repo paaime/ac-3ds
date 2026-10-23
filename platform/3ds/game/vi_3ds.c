@@ -3,6 +3,7 @@
 #include "acres_3ds.h"
 #include "audio_3ds.h"
 #include "frame_3ds.h"
+#include "look_3ds.h"
 #include "os_3ds.h"
 #include "profiler_3ds.h"
 #include "settings_3ds.h"
@@ -63,6 +64,7 @@ void VIWaitForRetrace(void)
     test_flags_frame();
     shop3ds_frame();
     weeds3ds_frame();
+    look3ds_frame();
     acres3ds_frame();
     settings3ds_frame();
     uint64_t status_start = prof3ds_now();

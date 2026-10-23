@@ -1,8 +1,9 @@
 HOSTCC        ?= cc
 HOST_CFLAGS   := -std=c11 -Wall -Wextra -Werror -O2 -I.
 BUILD         := build/host
-MODULES       := pica_tile gc_texture pot_pad gc_clock mem_layout pad_map audio_pacer wave_pool pcm_level pcm_limiter gc_ortho dsp_firmware quest_bits prof_window pcm_stereo nes_pixels feed_rate settings_file gc_pattern bottom_layout light_timer stall_watch tex_memo debounce press_hold tga acre_sync acre_select quick_save text_wrap disc_check ordinance gc_msg ordinance_talk
+MODULES       := pica_tile gc_texture pot_pad gc_clock mem_layout pad_map audio_pacer wave_pool pcm_level pcm_limiter gc_ortho dsp_firmware quest_bits prof_window pcm_stereo nes_pixels feed_rate settings_file gc_pattern bottom_layout light_timer stall_watch tex_memo debounce press_hold tga acre_sync acre_select quick_save text_wrap disc_check ordinance gc_msg ordinance_talk look look_talk
 DEPS_ordinance_talk := ordinance.c gc_msg.c
+DEPS_look_talk := gc_msg.c look.c
 
 # clang only: gcc lacks source-based coverage. macOS keeps the llvm tools behind xcrun.
 COV_CC        ?= clang

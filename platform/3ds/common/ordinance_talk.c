@@ -41,6 +41,8 @@ typedef enum {
 } Slot;
 
 _Static_assert(SLOT_COUNT * SPEAKERS == ORDINANCE_TALK_MSG_COUNT, "one message per slot and speaker");
+_Static_assert(ORDINANCE_TALK_STRING_END - ORDINANCE_TALK_STRING_ORDINANCES == PORT_STRING_ORDINANCE_COUNT,
+               "port_msg.h counts every string");
 
 typedef struct {
     const char* name;

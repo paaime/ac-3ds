@@ -58,6 +58,10 @@ change it:
   Turnips keep their price.
 - Beautiful Town: no new weeds and no cockroaches.
 
+Your look: on the train, Rover asks your skin tone, from Fair to Deep brown.
+Later, your house's gyroid has "Change my look": your face and skin tone,
+with a preview. Summer tans still fade back to the tone you chose.
+
 NES games (the NES furniture in your house) run in the middle of the top
 screen; hold L and R and press ZL to leave. Clu Clu Land D is a Famicom Disk
 System game and doesn't run.

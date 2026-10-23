@@ -126,8 +126,8 @@ void aPG_ask_for_business(NPC_POSTGIRL_ACTOR *postgirl, GAME_PLAY *play) {
             break;
         }
 #ifdef TARGET_3DS
-        choice = ac3ds_post_menu_choice(choice);
-        if (choice == AC3DS_POST_CHOICE_ORDINANCES) {
+        choice = ac3ds_menu_choice(choice);
+        if (choice == AC3DS_MENU_CHOICE_ADDED) {
             mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 0x9, 0x0);
             postgirl->process = aPG_ordinance;
             return;

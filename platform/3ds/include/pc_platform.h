@@ -88,11 +88,14 @@ extern int ac3ds_ordinance_weeds_grow(void);
 extern int ac3ds_msg_build(int index, unsigned char* buf, int size);
 extern void ac3ds_msg_patch(int index, unsigned char* buf, int len, int size);
 
-/* Pelly's counter menu once ac3ds_msg_patch gave it Ordinances (game/post_office_3ds.c). */
-#define AC3DS_POST_CHOICE_ORDINANCES 6 /* past mChoice_CHOICE5 */
-extern int ac3ds_post_menu_choice(int choice);
+/* A menu's choice once ac3ds_msg_patch added one: the game's own, or the added one (game/messages_3ds.c). */
+#define AC3DS_MENU_CHOICE_ADDED 6 /* past mChoice_CHOICE5 */
+extern int ac3ds_menu_choice(int choice);
 /* TRUE once the ordinance talk is over: Pelly's "anything else?" comes next. */
 extern int ac3ds_post_ordinance_talk(void);
+
+/* The skin tone the player chose: the sun's tan fades no lighter (game/look_3ds.c). */
+extern int ac3ds_look_tan_floor(void);
 
 /* The 640x480 EFB the game projects for. */
 extern int g_pc_window_w;
